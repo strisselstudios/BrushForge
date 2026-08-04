@@ -1,0 +1,166 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="3190e3cc-5812-41ad-8dac-7c486455fffa" name="stris@DESKTOP-ICI35TL 2026-08-03 21:51:42" runUser="DESKTOP-ICI35TL\stris" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-08-03T21:51:42.3476379-05:00" queuing="2026-08-03T21:51:42.3476380-05:00" start="2026-08-03T21:51:41.2032625-05:00" finish="2026-08-03T21:51:42.3778925-05:00" />
+  <TestSettings name="default" id="3b6c2baa-8609-4859-b108-e38dc97b208b">
+    <Deployment runDeploymentRoot="stris_DESKTOP-ICI35TL_2026-08-03_21_51_42" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="8dc215e7-a45d-4812-8b6e-74cab30986cc" testId="9f086c7e-744d-8817-3f8e-9722d8df64c3" testName="BrushForge.Tests.Geometry.Vector3dTests.CrossProductConfirmsRightHandedCoordinates" computerName="DESKTOP-ICI35TL" duration="00:00:00.0005928" startTime="2026-08-03T21:51:42.3285203-05:00" endTime="2026-08-03T21:51:42.3285672-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8dc215e7-a45d-4812-8b6e-74cab30986cc" />
+    <UnitTestResult executionId="02bcd6ad-abc3-48d7-a7b1-b76c126ab6d3" testId="2c3eaba2-e25f-3c90-0990-cb956d8058ba" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.CoordinateSystemUsesRightHandedZUpConvention" computerName="DESKTOP-ICI35TL" duration="00:00:00.0041895" startTime="2026-08-03T21:51:42.3265552-05:00" endTime="2026-08-03T21:51:42.3296567-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="02bcd6ad-abc3-48d7-a7b1-b76c126ab6d3" />
+    <UnitTestResult executionId="18ca8809-b645-4866-9a24-838ebe1d32ea" testId="664c585c-1f4a-f0e3-c773-e5b30755fd00" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: -12, expected: -16)" computerName="DESKTOP-ICI35TL" duration="00:00:00.0000052" startTime="2026-08-03T21:51:42.3010451-05:00" endTime="2026-08-03T21:51:42.3010914-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="18ca8809-b645-4866-9a24-838ebe1d32ea" />
+    <UnitTestResult executionId="e22fe0cc-5760-486c-9281-9e7f22d81216" testId="12c47706-f724-a5cc-7d9b-c5380c949463" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: -11.9, expected: -8)" computerName="DESKTOP-ICI35TL" duration="00:00:00.0000050" startTime="2026-08-03T21:51:42.3013216-05:00" endTime="2026-08-03T21:51:42.3020001-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e22fe0cc-5760-486c-9281-9e7f22d81216" />
+    <UnitTestResult executionId="a641201c-dc5d-4226-8a29-698842bec2fc" testId="15fa42c5-7d36-fd04-9ad2-2c37a71580b9" testName="BrushForge.Tests.Geometry.Vector3dTests.DistanceUsesThreeDimensionalCoordinates" computerName="DESKTOP-ICI35TL" duration="00:00:00.1556615" startTime="2026-08-03T21:51:42.1305528-05:00" endTime="2026-08-03T21:51:42.2945303-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a641201c-dc5d-4226-8a29-698842bec2fc" />
+    <UnitTestResult executionId="9a1792a7-d4e8-43bd-be80-85059916323a" testId="b3e60353-dcf1-95e6-3f43-684c87cd6fe2" testName="BrushForge.Tests.Geometry.Vector3dTests.NormalizeProducesUnitLength" computerName="DESKTOP-ICI35TL" duration="00:00:00.0005648" startTime="2026-08-03T21:51:42.3279656-05:00" endTime="2026-08-03T21:51:42.3281927-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9a1792a7-d4e8-43bd-be80-85059916323a" />
+    <UnitTestResult executionId="712da521-2dd8-4ed8-ad62-2c8754b80534" testId="3f0f93ba-f747-e0a2-5a43-e53dca025010" testName="BrushForge.Tests.Core.DeterministicRandomTests.EqualSeedsProduceEqualSequences" computerName="DESKTOP-ICI35TL" duration="00:00:00.0002422" startTime="2026-08-03T21:51:42.3255740-05:00" endTime="2026-08-03T21:51:42.3259109-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="712da521-2dd8-4ed8-ad62-2c8754b80534" />
+    <UnitTestResult executionId="0e42a7c8-bf3b-47a4-80e1-3ba190ebdf9d" testId="f41d7da2-3e36-66e7-97e7-467b430dd2b7" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: 0, expected: 0)" computerName="DESKTOP-ICI35TL" duration="00:00:00.0001958" startTime="2026-08-03T21:51:42.3008851-05:00" endTime="2026-08-03T21:51:42.3009380-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0e42a7c8-bf3b-47a4-80e1-3ba190ebdf9d" />
+    <UnitTestResult executionId="d8dcffd9-d2a6-429c-acfc-b949a0cdfdd1" testId="5888ae04-814d-f20f-735b-bea869d6e7af" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.CoordinateScaleRejectsInvalidValues" computerName="DESKTOP-ICI35TL" duration="00:00:00.0006318" startTime="2026-08-03T21:51:42.3262137-05:00" endTime="2026-08-03T21:51:42.3264343-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d8dcffd9-d2a6-429c-acfc-b949a0cdfdd1" />
+    <UnitTestResult executionId="a6489742-4943-492f-b593-761e932f7e78" testId="e13e8b81-c540-3407-3f6a-35fb37f4dd29" testName="BrushForge.Tests.Core.DeterministicRandomTests.UnitDoubleNeverReachesOne" computerName="DESKTOP-ICI35TL" duration="00:00:00.0003786" startTime="2026-08-03T21:51:42.3251908-05:00" endTime="2026-08-03T21:51:42.3253041-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a6489742-4943-492f-b593-761e932f7e78" />
+    <UnitTestResult executionId="25fcf090-01b9-49a7-843b-e7760f38c745" testId="e7b3d1a4-4077-88b1-beb9-4ddafc1d0541" testName="BrushForge.Tests.Core.DeterministicRandomTests.GeneratorSequenceIsStable" computerName="DESKTOP-ICI35TL" duration="00:00:00.1556236" startTime="2026-08-03T21:51:42.1305784-05:00" endTime="2026-08-03T21:51:42.2906026-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="25fcf090-01b9-49a7-843b-e7760f38c745" />
+    <UnitTestResult executionId="f8682c7a-e912-4b74-b009-46587ae13a94" testId="186a33b5-f158-e2cd-8a06-34ecb0dffbbe" testName="BrushForge.Tests.Core.DiagnosticTests.DiagnosticRequiresCodeAndMessage" computerName="DESKTOP-ICI35TL" duration="00:00:00.1541935" startTime="2026-08-03T21:51:42.1292865-05:00" endTime="2026-08-03T21:51:42.2946033-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f8682c7a-e912-4b74-b009-46587ae13a94" />
+    <UnitTestResult executionId="1b05ed85-7df6-4766-935d-20535666b2c8" testId="fd8d74b6-e32e-48da-ccd2-7d864e749cb3" testName="BrushForge.Tests.Core.DeterministicRandomTests.IntegerRangeHonorsInclusiveAndExclusiveBounds" computerName="DESKTOP-ICI35TL" duration="00:00:00.0009898" startTime="2026-08-03T21:51:42.3260383-05:00" endTime="2026-08-03T21:51:42.3262611-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1b05ed85-7df6-4766-935d-20535666b2c8" />
+    <UnitTestResult executionId="80b0233c-5e6f-43a6-b865-01f0ceaaa51c" testId="a6daafc8-3cbc-df7a-1672-463bc612a36f" testName="BrushForge.Tests.Core.DiagnosticTests.DiagnosticBagTracksWarningsAndErrors" computerName="DESKTOP-ICI35TL" duration="00:00:00.0031457" startTime="2026-08-03T21:51:42.3250868-05:00" endTime="2026-08-03T21:51:42.3280210-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="80b0233c-5e6f-43a6-b865-01f0ceaaa51c" />
+    <UnitTestResult executionId="991c5209-32df-4957-b4c7-c5a1fd617c6a" testId="46261481-330c-ceec-9c81-690a7d50cfe1" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.CoordinateScaleConvertsInBothDirections" computerName="DESKTOP-ICI35TL" duration="00:00:00.0006752" startTime="2026-08-03T21:51:42.3248932-05:00" endTime="2026-08-03T21:51:42.3256225-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="991c5209-32df-4957-b4c7-c5a1fd617c6a" />
+    <UnitTestResult executionId="89c6b2ff-8b65-4e47-9ffc-5cd8151b0fe3" testId="90e96c3b-8a38-075a-b489-8bcd62fc7ba6" testName="BrushForge.Tests.Core.DeterministicRandomTests.SeedCanRoundTripThroughInvariantText" computerName="DESKTOP-ICI35TL" duration="00:00:00.0025583" startTime="2026-08-03T21:51:42.3263830-05:00" endTime="2026-08-03T21:51:42.3286466-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="89c6b2ff-8b65-4e47-9ffc-5cd8151b0fe3" />
+    <UnitTestResult executionId="d102b54f-38b9-4c29-bf58-204fc5dde67c" testId="2c0f3fae-ada8-2367-8c2c-a32a146948b6" testName="BrushForge.Tests.Geometry.Vector3dTests.VectorArithmeticPreservesDoublePrecisionValues" computerName="DESKTOP-ICI35TL" duration="00:00:00.0026580" startTime="2026-08-03T21:51:42.3249664-05:00" endTime="2026-08-03T21:51:42.3266021-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d102b54f-38b9-4c29-bf58-204fc5dde67c" />
+    <UnitTestResult executionId="9b629696-22a3-412e-aaa5-d9f4c73a08c5" testId="bc23beff-11e3-1085-1a60-00dcc32c6483" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: 12, expected: 16)" computerName="DESKTOP-ICI35TL" duration="00:00:00.0000022" startTime="2026-08-03T21:51:42.3011787-05:00" endTime="2026-08-03T21:51:42.3012263-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9b629696-22a3-412e-aaa5-d9f4c73a08c5" />
+    <UnitTestResult executionId="85c959de-ca9f-492f-be8e-f70c76502914" testId="21f023ac-19e9-0f24-0800-5b19bdb02bff" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridAlignmentUsesCentralTolerance" computerName="DESKTOP-ICI35TL" duration="00:00:00.0004274" startTime="2026-08-03T21:51:42.3258629-05:00" endTime="2026-08-03T21:51:42.3260849-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="85c959de-ca9f-492f-be8e-f70c76502914" />
+    <UnitTestResult executionId="fbf02193-d7e2-4c49-b47b-58611b1d9e07" testId="d4245e92-12e4-4f40-5591-8ef053931cfc" testName="BrushForge.Tests.Geometry.Vector3dTests.NormalizeRejectsZeroVector" computerName="DESKTOP-ICI35TL" duration="00:00:00.0003714" startTime="2026-08-03T21:51:42.3283485-05:00" endTime="2026-08-03T21:51:42.3283970-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fbf02193-d7e2-4c49-b47b-58611b1d9e07" />
+    <UnitTestResult executionId="d475e77a-47e3-4849-a515-b7cdef9fb901" testId="e88eb188-bbb3-14b7-1b8f-91a3607d6542" testName="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: 11.9, expected: 8)" computerName="DESKTOP-ICI35TL" duration="00:00:00.1556443" startTime="2026-08-03T21:51:42.1305087-05:00" endTime="2026-08-03T21:51:42.2946300-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d475e77a-47e3-4849-a515-b7cdef9fb901" />
+    <UnitTestResult executionId="18bb643b-3750-4a6b-8be1-9c66bd880ed6" testId="8e83f3d1-d379-751e-0737-f1b70917f5b3" testName="BrushForge.Tests.Core.DiagnosticTests.SnapshotIsIndependentFromLaterChanges" computerName="DESKTOP-ICI35TL" duration="00:00:00.0022552" startTime="2026-08-03T21:51:42.3281455-05:00" endTime="2026-08-03T21:51:42.3288891-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="18bb643b-3750-4a6b-8be1-9c66bd880ed6" />
+    <UnitTestResult executionId="3008bbab-0200-47c6-9aa4-1034d43843d2" testId="bf9b69c7-ab5e-6535-42f8-fc38dc236417" testName="BrushForge.Tests.Core.DeterministicRandomTests.TextSeedHashIsStable" computerName="DESKTOP-ICI35TL" duration="00:00:00.0000810" startTime="2026-08-03T21:51:42.3287617-05:00" endTime="2026-08-03T21:51:42.3288104-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3008bbab-0200-47c6-9aa4-1034d43843d2" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="BrushForge.Tests.Core.DeterministicRandomTests.UnitDoubleNeverReachesOne" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="e13e8b81-c540-3407-3f6a-35fb37f4dd29">
+      <Execution id="a6489742-4943-492f-b593-761e932f7e78" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DeterministicRandomTests" name="UnitDoubleNeverReachesOne" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.DiagnosticTests.DiagnosticRequiresCodeAndMessage" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="186a33b5-f158-e2cd-8a06-34ecb0dffbbe">
+      <Execution id="f8682c7a-e912-4b74-b009-46587ae13a94" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DiagnosticTests" name="DiagnosticRequiresCodeAndMessage" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: 11.9, expected: 8)" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="e88eb188-bbb3-14b7-1b8f-91a3607d6542">
+      <Execution id="d475e77a-47e3-4849-a515-b7cdef9fb901" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="GridSnappingUsesMidpointAwayFromZero" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.CoordinateScaleConvertsInBothDirections" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="46261481-330c-ceec-9c81-690a7d50cfe1">
+      <Execution id="991c5209-32df-4957-b4c7-c5a1fd617c6a" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="CoordinateScaleConvertsInBothDirections" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.DeterministicRandomTests.EqualSeedsProduceEqualSequences" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="3f0f93ba-f747-e0a2-5a43-e53dca025010">
+      <Execution id="712da521-2dd8-4ed8-ad62-2c8754b80534" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DeterministicRandomTests" name="EqualSeedsProduceEqualSequences" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Geometry.Vector3dTests.CrossProductConfirmsRightHandedCoordinates" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="9f086c7e-744d-8817-3f8e-9722d8df64c3">
+      <Execution id="8dc215e7-a45d-4812-8b6e-74cab30986cc" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Geometry.Vector3dTests" name="CrossProductConfirmsRightHandedCoordinates" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.DiagnosticTests.SnapshotIsIndependentFromLaterChanges" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="8e83f3d1-d379-751e-0737-f1b70917f5b3">
+      <Execution id="18bb643b-3750-4a6b-8be1-9c66bd880ed6" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DiagnosticTests" name="SnapshotIsIndependentFromLaterChanges" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.DeterministicRandomTests.TextSeedHashIsStable" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="bf9b69c7-ab5e-6535-42f8-fc38dc236417">
+      <Execution id="3008bbab-0200-47c6-9aa4-1034d43843d2" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DeterministicRandomTests" name="TextSeedHashIsStable" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.DeterministicRandomTests.IntegerRangeHonorsInclusiveAndExclusiveBounds" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="fd8d74b6-e32e-48da-ccd2-7d864e749cb3">
+      <Execution id="1b05ed85-7df6-4766-935d-20535666b2c8" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DeterministicRandomTests" name="IntegerRangeHonorsInclusiveAndExclusiveBounds" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.CoordinateSystemUsesRightHandedZUpConvention" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="2c3eaba2-e25f-3c90-0990-cb956d8058ba">
+      <Execution id="02bcd6ad-abc3-48d7-a7b1-b76c126ab6d3" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="CoordinateSystemUsesRightHandedZUpConvention" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.CoordinateScaleRejectsInvalidValues" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="5888ae04-814d-f20f-735b-bea869d6e7af">
+      <Execution id="d8dcffd9-d2a6-429c-acfc-b949a0cdfdd1" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="CoordinateScaleRejectsInvalidValues" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridAlignmentUsesCentralTolerance" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="21f023ac-19e9-0f24-0800-5b19bdb02bff">
+      <Execution id="85c959de-ca9f-492f-be8e-f70c76502914" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="GridAlignmentUsesCentralTolerance" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: 0, expected: 0)" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="f41d7da2-3e36-66e7-97e7-467b430dd2b7">
+      <Execution id="0e42a7c8-bf3b-47a4-80e1-3ba190ebdf9d" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="GridSnappingUsesMidpointAwayFromZero" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.DeterministicRandomTests.SeedCanRoundTripThroughInvariantText" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="90e96c3b-8a38-075a-b489-8bcd62fc7ba6">
+      <Execution id="89c6b2ff-8b65-4e47-9ffc-5cd8151b0fe3" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DeterministicRandomTests" name="SeedCanRoundTripThroughInvariantText" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.DiagnosticTests.DiagnosticBagTracksWarningsAndErrors" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="a6daafc8-3cbc-df7a-1672-463bc612a36f">
+      <Execution id="80b0233c-5e6f-43a6-b865-01f0ceaaa51c" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DiagnosticTests" name="DiagnosticBagTracksWarningsAndErrors" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.DeterministicRandomTests.GeneratorSequenceIsStable" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="e7b3d1a4-4077-88b1-beb9-4ddafc1d0541">
+      <Execution id="25fcf090-01b9-49a7-843b-e7760f38c745" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.DeterministicRandomTests" name="GeneratorSequenceIsStable" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Geometry.Vector3dTests.DistanceUsesThreeDimensionalCoordinates" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="15fa42c5-7d36-fd04-9ad2-2c37a71580b9">
+      <Execution id="a641201c-dc5d-4226-8a29-698842bec2fc" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Geometry.Vector3dTests" name="DistanceUsesThreeDimensionalCoordinates" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: 12, expected: 16)" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="bc23beff-11e3-1085-1a60-00dcc32c6483">
+      <Execution id="9b629696-22a3-412e-aaa5-d9f4c73a08c5" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="GridSnappingUsesMidpointAwayFromZero" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Geometry.Vector3dTests.NormalizeRejectsZeroVector" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="d4245e92-12e4-4f40-5591-8ef053931cfc">
+      <Execution id="fbf02193-d7e2-4c49-b47b-58611b1d9e07" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Geometry.Vector3dTests" name="NormalizeRejectsZeroVector" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: -11.9, expected: -8)" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="12c47706-f724-a5cc-7d9b-c5380c949463">
+      <Execution id="e22fe0cc-5760-486c-9281-9e7f22d81216" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="GridSnappingUsesMidpointAwayFromZero" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Core.CoordinateInfrastructureTests.GridSnappingUsesMidpointAwayFromZero(input: -12, expected: -16)" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="664c585c-1f4a-f0e3-c773-e5b30755fd00">
+      <Execution id="18ca8809-b645-4866-9a24-838ebe1d32ea" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Core.CoordinateInfrastructureTests" name="GridSnappingUsesMidpointAwayFromZero" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Geometry.Vector3dTests.NormalizeProducesUnitLength" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="b3e60353-dcf1-95e6-3f43-684c87cd6fe2">
+      <Execution id="9a1792a7-d4e8-43bd-be80-85059916323a" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Geometry.Vector3dTests" name="NormalizeProducesUnitLength" />
+    </UnitTest>
+    <UnitTest name="BrushForge.Tests.Geometry.Vector3dTests.VectorArithmeticPreservesDoublePrecisionValues" storage="c:\development\brushforge\tests\brushforge.tests\bin\debug\net10.0\brushforge.tests.dll" id="2c0f3fae-ada8-2367-8c2c-a32a146948b6">
+      <Execution id="d102b54f-38b9-4c29-bf58-204fc5dde67c" />
+      <TestMethod codeBase="C:\Development\BrushForge\tests\BrushForge.Tests\bin\Debug\net10.0\BrushForge.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="BrushForge.Tests.Geometry.Vector3dTests" name="VectorArithmeticPreservesDoublePrecisionValues" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="9f086c7e-744d-8817-3f8e-9722d8df64c3" executionId="8dc215e7-a45d-4812-8b6e-74cab30986cc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2c3eaba2-e25f-3c90-0990-cb956d8058ba" executionId="02bcd6ad-abc3-48d7-a7b1-b76c126ab6d3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="664c585c-1f4a-f0e3-c773-e5b30755fd00" executionId="18ca8809-b645-4866-9a24-838ebe1d32ea" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="12c47706-f724-a5cc-7d9b-c5380c949463" executionId="e22fe0cc-5760-486c-9281-9e7f22d81216" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="15fa42c5-7d36-fd04-9ad2-2c37a71580b9" executionId="a641201c-dc5d-4226-8a29-698842bec2fc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3e60353-dcf1-95e6-3f43-684c87cd6fe2" executionId="9a1792a7-d4e8-43bd-be80-85059916323a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3f0f93ba-f747-e0a2-5a43-e53dca025010" executionId="712da521-2dd8-4ed8-ad62-2c8754b80534" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f41d7da2-3e36-66e7-97e7-467b430dd2b7" executionId="0e42a7c8-bf3b-47a4-80e1-3ba190ebdf9d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5888ae04-814d-f20f-735b-bea869d6e7af" executionId="d8dcffd9-d2a6-429c-acfc-b949a0cdfdd1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e13e8b81-c540-3407-3f6a-35fb37f4dd29" executionId="a6489742-4943-492f-b593-761e932f7e78" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e7b3d1a4-4077-88b1-beb9-4ddafc1d0541" executionId="25fcf090-01b9-49a7-843b-e7760f38c745" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="186a33b5-f158-e2cd-8a06-34ecb0dffbbe" executionId="f8682c7a-e912-4b74-b009-46587ae13a94" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fd8d74b6-e32e-48da-ccd2-7d864e749cb3" executionId="1b05ed85-7df6-4766-935d-20535666b2c8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a6daafc8-3cbc-df7a-1672-463bc612a36f" executionId="80b0233c-5e6f-43a6-b865-01f0ceaaa51c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="46261481-330c-ceec-9c81-690a7d50cfe1" executionId="991c5209-32df-4957-b4c7-c5a1fd617c6a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="90e96c3b-8a38-075a-b489-8bcd62fc7ba6" executionId="89c6b2ff-8b65-4e47-9ffc-5cd8151b0fe3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="2c0f3fae-ada8-2367-8c2c-a32a146948b6" executionId="d102b54f-38b9-4c29-bf58-204fc5dde67c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bc23beff-11e3-1085-1a60-00dcc32c6483" executionId="9b629696-22a3-412e-aaa5-d9f4c73a08c5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="21f023ac-19e9-0f24-0800-5b19bdb02bff" executionId="85c959de-ca9f-492f-be8e-f70c76502914" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d4245e92-12e4-4f40-5591-8ef053931cfc" executionId="fbf02193-d7e2-4c49-b47b-58611b1d9e07" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e88eb188-bbb3-14b7-1b8f-91a3607d6542" executionId="d475e77a-47e3-4849-a515-b7cdef9fb901" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8e83f3d1-d379-751e-0737-f1b70917f5b3" executionId="18bb643b-3750-4a6b-8be1-9c66bd880ed6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bf9b69c7-ab5e-6535-42f8-fc38dc236417" executionId="3008bbab-0200-47c6-9aa4-1034d43843d2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="23" executed="23" passed="23" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.4+50e68bbb8b (64-bit .NET 10.0.10)&#xD;
+[xUnit.net 00:00:00.28]   Discovering: BrushForge.Tests&#xD;
+[xUnit.net 00:00:00.33]   Discovered:  BrushForge.Tests&#xD;
+[xUnit.net 00:00:00.35]   Starting:    BrushForge.Tests&#xD;
+[xUnit.net 00:00:00.57]   Finished:    BrushForge.Tests&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

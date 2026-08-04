@@ -1,4 +1,4 @@
-﻿using BrushForge.Core.Diagnostics;
+using BrushForge.Core.Diagnostics;
 using BrushForge.Geometry.Bounds;
 using BrushForge.Geometry.Brushes;
 using BrushForge.Geometry.Intersections;
@@ -199,7 +199,7 @@ public static class ConvexBrushValidator
 
     private static List<BrushFaceGeometry> ReconstructFaces(
         ConvexBrush brush,
-        IReadOnlyList<Vector3d> vertices,
+        List<Vector3d> vertices,
         BrushValidationSettings settings,
         DiagnosticBag diagnostics)
     {
@@ -268,8 +268,8 @@ public static class ConvexBrushValidator
     }
 
     private static int[] OrderFaceVertices(
-        IReadOnlyList<Vector3d> vertices,
-        IReadOnlyList<int> faceVertexIndices,
+        List<Vector3d> vertices,
+        List<int> faceVertexIndices,
         Vector3d faceNormal)
     {
         Vector3d faceCenter = Vector3d.Zero;
@@ -313,15 +313,15 @@ public static class ConvexBrushValidator
     }
 
     private static double CalculateFaceArea(
-        IReadOnlyList<Vector3d> vertices,
-        IReadOnlyList<int> orderedIndices,
+        List<Vector3d> vertices,
+        int[] orderedIndices,
         Vector3d faceNormal)
     {
         Vector3d accumulatedCross = Vector3d.Zero;
 
         for (
             int index = 0;
-            index < orderedIndices.Count;
+            index < orderedIndices.Length;
             index++
         ) {
             Vector3d current =
@@ -331,7 +331,7 @@ public static class ConvexBrushValidator
                 vertices[
                     orderedIndices[
                         (index + 1) %
-                        orderedIndices.Count]];
+                        orderedIndices.Length]];
 
             accumulatedCross +=
                 Vector3d.Cross(current, next);
@@ -344,7 +344,7 @@ public static class ConvexBrushValidator
     }
 
     private static Vector3d CalculateCentroid(
-        IReadOnlyList<Vector3d> vertices)
+        List<Vector3d> vertices)
     {
         Vector3d total = Vector3d.Zero;
 
@@ -497,8 +497,8 @@ public static class ConvexBrushValidator
     }
 
     private static double CalculateVolume(
-        IReadOnlyList<Vector3d> vertices,
-        IReadOnlyList<BrushFaceGeometry> faces,
+        List<Vector3d> vertices,
+        List<BrushFaceGeometry> faces,
         Vector3d interiorPoint)
     {
         double volume = 0.0;

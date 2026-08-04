@@ -1,7 +1,9 @@
-﻿using BrushForge.Geometry.Brushes;
+using BrushForge.Geometry.Brushes;
 using BrushForge.Geometry.Vectors;
 using BrushForge.MapFormat.Model;
 using BrushForge.MapFormat.Validation;
+
+using BrushForge.Tests.Geometry;
 
 namespace BrushForge.Tests.MapFormat;
 

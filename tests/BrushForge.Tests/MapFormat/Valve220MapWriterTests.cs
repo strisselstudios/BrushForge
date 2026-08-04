@@ -1,8 +1,10 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 using BrushForge.Geometry.Vectors;
 using BrushForge.MapFormat.Model;
 using BrushForge.MapFormat.Serialization;
+
+using BrushForge.Tests.Geometry;
 
 namespace BrushForge.Tests.MapFormat;
 

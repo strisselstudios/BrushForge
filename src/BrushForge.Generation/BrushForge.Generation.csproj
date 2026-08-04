@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\BrushForge.Core\BrushForge.Core.csproj" />
     <ProjectReference Include="..\BrushForge.Geometry\BrushForge.Geometry.csproj" />
+    <ProjectReference Include="..\BrushForge.MapFormat\BrushForge.MapFormat.csproj" />
     <ProjectReference Include="..\BrushForge.ProjectModel\BrushForge.ProjectModel.csproj" />
   </ItemGroup>
 

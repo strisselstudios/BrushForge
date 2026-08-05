@@ -129,7 +129,19 @@
                 CornerRadius="6">
             <Grid>
                 <Viewport3D x:Name="TreePreviewViewport"
-                            ClipToBounds="True" />
+                            ClipToBounds="True"
+                            Focusable="True" />
+                <Border HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="14"
+                        Padding="10,7"
+                        IsHitTestVisible="False"
+                        Background="#CC202329"
+                        CornerRadius="4">
+                    <TextBlock Foreground="#D7DCE4"
+                               TextAlignment="Right"
+                               Text="Left-drag: Orbit&#x0a;Wheel: Zoom&#x0a;Right-drag: Pan&#x0a;Double-click: Reset" />
+                </Border>
                 <Border HorizontalAlignment="Left"
                         VerticalAlignment="Bottom"
                         Margin="14"

@@ -16,10 +16,14 @@ namespace BrushForge.App;
 public partial class MainWindow : Window
 {
     private TreeGenerationResult? _currentResult;
+    private readonly OrbitCameraController _previewCameraController;
 
     public MainWindow()
     {
         InitializeComponent();
+        _previewCameraController =
+            new OrbitCameraController(
+                TreePreviewViewport);
         GenerateTree();
     }
 
@@ -105,6 +109,8 @@ public partial class MainWindow : Window
             TreePreviewRenderer.Render(
                 TreePreviewViewport,
                 result);
+            _previewCameraController.Reset(
+                result.Bounds);
 
             PreviewSummaryTextBlock.Text =
                 $"{result.BrushCount.ToString(CultureInfo.InvariantCulture)} brushes | " +
@@ -116,7 +122,7 @@ public partial class MainWindow : Window
                 System.Windows.Media.Brushes.LightGreen;
 
             StatusTextBlock.Text =
-                "Tree generated from the current parameters. The preview uses the actual generated brush bounds.";
+                "Tree generated from the current parameters. The preview uses the actual generated brush faces.";
         }
         catch (FormatException exception) {
             ClearResult(exception.Message);

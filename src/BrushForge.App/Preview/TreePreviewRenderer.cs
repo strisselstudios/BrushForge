@@ -2,12 +2,16 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using BrushForge.Geometry.Bounds;
+using BrushForge.Geometry.Brushes;
+using BrushForge.Geometry.Triangulation;
+using BrushForge.Geometry.Validation;
+using BrushForge.Geometry.Vectors;
 using BrushForge.Generation.Foliage;
 
 namespace BrushForge.App.Preview;
 
 /// <summary>
-/// Builds a lightweight WPF preview from the actual generated brush bounds.
+/// Builds a lightweight WPF preview from reconstructed generated brush faces.
 /// </summary>
 internal static class TreePreviewRenderer
 {
@@ -61,8 +65,8 @@ internal static class TreePreviewRenderer
                     new SolidColorBrush(color));
 
             GeometryModel3D model = new(
-                CreateBoxMesh(
-                    part.Bounds),
+                CreateBrushMesh(
+                    part.Brush),
                 material)
             {
                 BackMaterial = material
@@ -120,48 +124,49 @@ internal static class TreePreviewRenderer
         };
     }
 
-    private static MeshGeometry3D CreateBoxMesh(
-        Bounds3d bounds)
+    private static MeshGeometry3D CreateBrushMesh(
+        ConvexBrush brush)
     {
-        double minimumX = bounds.Minimum.X;
-        double minimumY = bounds.Minimum.Y;
-        double minimumZ = bounds.Minimum.Z;
-        double maximumX = bounds.Maximum.X;
-        double maximumY = bounds.Maximum.Y;
-        double maximumZ = bounds.Maximum.Z;
+        BrushValidationResult validation =
+            ConvexBrushValidator.Validate(
+                brush);
 
-        Point3DCollection positions = new()
-        {
-            new Point3D(minimumX, minimumY, minimumZ),
-            new Point3D(maximumX, minimumY, minimumZ),
-            new Point3D(maximumX, maximumY, minimumZ),
-            new Point3D(minimumX, maximumY, minimumZ),
-            new Point3D(minimumX, minimumY, maximumZ),
-            new Point3D(maximumX, minimumY, maximumZ),
-            new Point3D(maximumX, maximumY, maximumZ),
-            new Point3D(minimumX, maximumY, maximumZ)
-        };
+        if (
+            !validation.IsValid ||
+            validation.Geometry is null
+        ) {
+            throw new InvalidOperationException(
+                "A generated brush could not be reconstructed for preview rendering.");
+        }
 
-        Int32Collection triangleIndices = new()
-        {
-            0, 2, 1,
-            0, 3, 2,
-            4, 5, 6,
-            4, 6, 7,
-            0, 1, 5,
-            0, 5, 4,
-            1, 2, 6,
-            1, 6, 5,
-            2, 3, 7,
-            2, 7, 6,
-            3, 0, 4,
-            3, 4, 7
-        };
+        TriangulatedBrushMesh triangulatedMesh =
+            ConvexBrushTriangulator.Triangulate(
+                validation.Geometry);
 
-        return new MeshGeometry3D
+        Point3DCollection positions = new();
+
+        foreach (Vector3d vertex in triangulatedMesh.Vertices) {
+            positions.Add(
+                new Point3D(
+                    vertex.X,
+                    vertex.Y,
+                    vertex.Z));
+        }
+
+        Int32Collection triangleIndices = new();
+
+        foreach (int index in triangulatedMesh.TriangleIndices) {
+            triangleIndices.Add(index);
+        }
+
+        MeshGeometry3D mesh = new()
         {
             Positions = positions,
             TriangleIndices = triangleIndices
         };
+
+        mesh.Freeze();
+
+        return mesh;
     }
 }

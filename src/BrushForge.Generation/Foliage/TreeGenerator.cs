@@ -72,6 +72,8 @@ public static class TreeGenerator
                 origin,
                 trunkWidthUnits,
                 trunkTopUnits,
+                settings.TrunkSegmentCount,
+                settings.TrunkTaper,
                 grid,
                 settings.TrunkTextureName)
                 .ToList();

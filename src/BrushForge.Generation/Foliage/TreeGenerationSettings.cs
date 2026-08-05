@@ -14,6 +14,12 @@ public sealed record TreeGenerationSettings
 {
     public const int MinimumCanopyLayerCount = 1;
     public const int MaximumCanopyLayerCount = 8;
+    public const int MinimumTrunkSegmentCount = 2;
+    public const int MaximumTrunkSegmentCount = 6;
+    public const int DefaultTrunkSegmentCount = 3;
+    public const double MinimumTrunkTaper = 0.0;
+    public const double MaximumTrunkTaper = 0.75;
+    public const double DefaultTrunkTaper = 0.25;
     public const int MaximumGridUnitCount = 1_000_000;
     public const double MaximumDimension = 131_072.0;
 
@@ -27,7 +33,9 @@ public sealed record TreeGenerationSettings
         GenerationSeed generationSeed,
         GridSpacing gridSpacing,
         string trunkTextureName,
-        string canopyTextureName)
+        string canopyTextureName,
+        int trunkSegmentCount = DefaultTrunkSegmentCount,
+        double trunkTaper = DefaultTrunkTaper)
     {
         if (!origin.IsFinite) {
             throw new ArgumentOutOfRangeException(
@@ -62,6 +70,27 @@ public sealed record TreeGenerationSettings
                 nameof(canopyLayerCount),
                 canopyLayerCount,
                 $"Canopy layer count must be between {MinimumCanopyLayerCount} and {MaximumCanopyLayerCount}.");
+        }
+
+        if (
+            trunkSegmentCount < MinimumTrunkSegmentCount ||
+            trunkSegmentCount > MaximumTrunkSegmentCount
+        ) {
+            throw new ArgumentOutOfRangeException(
+                nameof(trunkSegmentCount),
+                trunkSegmentCount,
+                $"Trunk segment count must be between {MinimumTrunkSegmentCount} and {MaximumTrunkSegmentCount}.");
+        }
+
+        if (
+            !NumericTolerances.IsFinite(trunkTaper) ||
+            trunkTaper < MinimumTrunkTaper ||
+            trunkTaper > MaximumTrunkTaper
+        ) {
+            throw new ArgumentOutOfRangeException(
+                nameof(trunkTaper),
+                trunkTaper,
+                $"Trunk taper must be between {MinimumTrunkTaper:P0} and {MaximumTrunkTaper:P0}.");
         }
 
         if (canopyHeight >= overallHeight) {
@@ -119,6 +148,20 @@ public sealed record TreeGenerationSettings
             gridSpacing,
             nameof(canopyHeight));
 
+        int maximumTrunkSegmentCount =
+            CalculateTrunkTopUnitCount(
+                overallHeight,
+                canopyHeight,
+                canopyLayerCount,
+                gridSpacing);
+
+        if (trunkSegmentCount > maximumTrunkSegmentCount) {
+            throw new ArgumentOutOfRangeException(
+                nameof(trunkSegmentCount),
+                trunkSegmentCount,
+                "Trunk segment count cannot exceed the generated trunk height in grid units.");
+        }
+
         Origin = origin;
         OverallHeight = overallHeight;
         TrunkWidth = trunkWidth;
@@ -133,6 +176,8 @@ public sealed record TreeGenerationSettings
         CanopyTextureName = NormalizeTextureName(
             canopyTextureName,
             nameof(canopyTextureName));
+        TrunkSegmentCount = trunkSegmentCount;
+        TrunkTaper = trunkTaper;
     }
 
     public Vector3d Origin { get; }
@@ -154,6 +199,10 @@ public sealed record TreeGenerationSettings
     public string TrunkTextureName { get; }
 
     public string CanopyTextureName { get; }
+
+    public int TrunkSegmentCount { get; }
+
+    public double TrunkTaper { get; }
 
     public static TreeGenerationSettings CreateDefault(
         BrushForgeProjectSettings projectSettings)
@@ -189,7 +238,9 @@ public sealed record TreeGenerationSettings
             GenerationSeed,
             GridSpacing,
             TrunkTextureName,
-            CanopyTextureName);
+            CanopyTextureName,
+            TrunkSegmentCount,
+            TrunkTaper);
     }
 
     public TreeGenerationSettings WithDimensions(
@@ -209,7 +260,9 @@ public sealed record TreeGenerationSettings
             GenerationSeed,
             GridSpacing,
             TrunkTextureName,
-            CanopyTextureName);
+            CanopyTextureName,
+            TrunkSegmentCount,
+            TrunkTaper);
     }
 
     public TreeGenerationSettings WithGenerationSeed(
@@ -225,7 +278,9 @@ public sealed record TreeGenerationSettings
             generationSeed,
             GridSpacing,
             TrunkTextureName,
-            CanopyTextureName);
+            CanopyTextureName,
+            TrunkSegmentCount,
+            TrunkTaper);
     }
 
     public TreeGenerationSettings WithTextures(
@@ -242,7 +297,66 @@ public sealed record TreeGenerationSettings
             GenerationSeed,
             GridSpacing,
             trunkTextureName,
-            canopyTextureName);
+            canopyTextureName,
+            TrunkSegmentCount,
+            TrunkTaper);
+    }
+
+    public TreeGenerationSettings WithTrunkShape(
+        int trunkSegmentCount,
+        double trunkTaper)
+    {
+        return new TreeGenerationSettings(
+            Origin,
+            OverallHeight,
+            TrunkWidth,
+            CanopyWidth,
+            CanopyHeight,
+            CanopyLayerCount,
+            GenerationSeed,
+            GridSpacing,
+            TrunkTextureName,
+            CanopyTextureName,
+            trunkSegmentCount,
+            trunkTaper);
+    }
+
+    private static int CalculateTrunkTopUnitCount(
+        double overallHeight,
+        double canopyHeight,
+        int canopyLayerCount,
+        GridSpacing gridSpacing)
+    {
+        int overallHeightUnits =
+            Math.Max(
+                2,
+                checked(
+                    (int)Math.Round(
+                        overallHeight /
+                        gridSpacing.Units,
+                        MidpointRounding.AwayFromZero)));
+
+        int canopyHeightUnits =
+            Math.Max(
+                canopyLayerCount,
+                checked(
+                    (int)Math.Round(
+                        canopyHeight /
+                        gridSpacing.Units,
+                        MidpointRounding.AwayFromZero)));
+
+        canopyHeightUnits =
+            Math.Min(
+                canopyHeightUnits,
+                overallHeightUnits - 1);
+
+        int canopyBottomUnits =
+            overallHeightUnits -
+            canopyHeightUnits;
+
+        return Math.Min(
+            overallHeightUnits,
+            canopyBottomUnits + 1);
     }
 
     private static void ValidateDimension(

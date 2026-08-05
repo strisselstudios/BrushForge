@@ -44,6 +44,22 @@ public static class TreeGenerationInputParser
                 input.CanopyLayerCount,
                 "Canopy layer count");
 
+        int trunkSegmentCount =
+            ParsePositiveInteger(
+                input.TrunkSegmentCount,
+                "Trunk segment count");
+
+        double trunkTaperPercent =
+            ParseBoundedDouble(
+                input.TrunkTaperPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkTaper *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkTaper *
+                    100.0,
+                displayName: "Trunk taper");
+
         double gridUnits =
             ParsePositiveDouble(
                 input.GridSpacing,
@@ -59,7 +75,9 @@ public static class TreeGenerationInputParser
             generationSeed,
             new GridSpacing(gridUnits),
             input.TrunkTextureName,
-            input.CanopyTextureName);
+            input.CanopyTextureName,
+            trunkSegmentCount,
+            trunkTaperPercent / 100.0);
     }
 
     private static GenerationSeed ParseGenerationSeed(
@@ -92,6 +110,29 @@ public static class TreeGenerationInputParser
         ) {
             throw new FormatException(
                 $"{displayName} must be a finite number greater than zero using a period as the decimal separator.");
+        }
+
+        return value;
+    }
+
+    private static double ParseBoundedDouble(
+        string text,
+        double minimum,
+        double maximum,
+        string displayName)
+    {
+        if (
+            !double.TryParse(
+                text,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out double value) ||
+            !double.IsFinite(value) ||
+            value < minimum ||
+            value > maximum
+        ) {
+            throw new FormatException(
+                $"{displayName} must be a finite number from {minimum.ToString("0.##", CultureInfo.InvariantCulture)} through {maximum.ToString("0.##", CultureInfo.InvariantCulture)} using a period as the decimal separator.");
         }
 
         return value;

@@ -10,14 +10,12 @@ namespace BrushForge.Generation.Foliage;
 /// </summary>
 internal static class TaperedTrunkGenerator
 {
-    private const int MinimumSegmentCount = 2;
-    private const int MaximumSegmentCount = 4;
-    private const int PreferredSegmentHeightUnits = 6;
-
     public static IReadOnlyList<GeneratedTreeBrush> Generate(
         Vector3d origin,
         int trunkWidthUnits,
         int trunkTopUnits,
+        int requestedSegmentCount,
+        double taper,
         double grid,
         string textureName)
     {
@@ -27,11 +25,34 @@ internal static class TaperedTrunkGenerator
                 trunkWidthUnits,
                 "The trunk width must contain at least one grid unit.");
         }
-        if (trunkTopUnits < MinimumSegmentCount) {
+        if (trunkTopUnits < 1) {
             throw new ArgumentOutOfRangeException(
                 nameof(trunkTopUnits),
                 trunkTopUnits,
-                $"The trunk height must contain at least {MinimumSegmentCount} grid units.");
+                "The trunk height must contain at least one grid unit.");
+        }
+
+        if (
+            requestedSegmentCount <
+                TreeGenerationSettings.MinimumTrunkSegmentCount ||
+            requestedSegmentCount >
+                TreeGenerationSettings.MaximumTrunkSegmentCount
+        ) {
+            throw new ArgumentOutOfRangeException(
+                nameof(requestedSegmentCount),
+                requestedSegmentCount,
+                $"The requested trunk segment count must be between {TreeGenerationSettings.MinimumTrunkSegmentCount} and {TreeGenerationSettings.MaximumTrunkSegmentCount}.");
+        }
+
+        if (
+            !double.IsFinite(taper) ||
+            taper < TreeGenerationSettings.MinimumTrunkTaper ||
+            taper > TreeGenerationSettings.MaximumTrunkTaper
+        ) {
+            throw new ArgumentOutOfRangeException(
+                nameof(taper),
+                taper,
+                $"The trunk taper must be between {TreeGenerationSettings.MinimumTrunkTaper:P0} and {TreeGenerationSettings.MaximumTrunkTaper:P0}.");
         }
         if (!double.IsFinite(grid) || grid <= 0.0) {
             throw new ArgumentOutOfRangeException(
@@ -41,14 +62,24 @@ internal static class TaperedTrunkGenerator
         }
         ArgumentException.ThrowIfNullOrWhiteSpace(textureName);
 
+        if (requestedSegmentCount > trunkTopUnits) {
+            throw new ArgumentOutOfRangeException(
+                nameof(requestedSegmentCount),
+                requestedSegmentCount,
+                "The requested trunk segment count cannot exceed the trunk height in grid units.");
+        }
+
         int segmentCount =
-            CalculateSegmentCount(
-                trunkTopUnits);
+            requestedSegmentCount;
+
         int topWidthUnits =
-            Math.Max(
+            Math.Clamp(
+                (int)Math.Round(
+                    trunkWidthUnits *
+                    (1.0 - taper),
+                    MidpointRounding.AwayFromZero),
                 1,
-                trunkWidthUnits -
-                (trunkWidthUnits >= 4 ? 1 : 0));
+                trunkWidthUnits);
         bool useOctagonalRings =
             topWidthUnits >= 3;
         int baseSegmentHeightUnits =
@@ -126,25 +157,6 @@ internal static class TaperedTrunkGenerator
         }
 
         return parts;
-    }
-
-    private static int CalculateSegmentCount(
-        int trunkTopUnits)
-    {
-        int preferredCount =
-            Math.Clamp(
-                (
-                    trunkTopUnits +
-                    PreferredSegmentHeightUnits -
-                    1
-                ) /
-                PreferredSegmentHeightUnits,
-                MinimumSegmentCount,
-                MaximumSegmentCount);
-
-        return Math.Min(
-            preferredCount,
-            trunkTopUnits);
     }
 
     private static int InterpolateWidthUnits(

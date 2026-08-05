@@ -12,4 +12,6 @@ public sealed record TreeGenerationInput(
     string CanopyLayerCount,
     string GridSpacing,
     string TrunkTextureName,
-    string CanopyTextureName);
+    string CanopyTextureName,
+    string TrunkSegmentCount = "3",
+    string TrunkTaperPercent = "25");

@@ -21,6 +21,11 @@ public partial class MainWindow : Window
     private const string DefaultGenerationSeed = "1";
     private const double DefaultOverallHeight = 256.0;
     private const double DefaultTrunkWidth = 32.0;
+    private const int DefaultTrunkSegmentCount =
+        TreeGenerationSettings.DefaultTrunkSegmentCount;
+    private const double DefaultTrunkTaperPercent =
+        TreeGenerationSettings.DefaultTrunkTaper *
+        100.0;
     private const double DefaultCanopyWidth = 160.0;
     private const double DefaultCanopyHeight = 128.0;
     private const int DefaultCanopyLayerCount = 3;
@@ -79,6 +84,17 @@ public partial class MainWindow : Window
             value: DefaultTrunkWidth);
 
         ConfigureSlider(
+            TrunkTaperSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkTaper *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkTaper *
+                100.0,
+            step: 5.0,
+            value: DefaultTrunkTaperPercent);
+
+        ConfigureSlider(
             CanopyWidthSlider,
             minimum: 128.0,
             maximum: 512.0,
@@ -122,15 +138,21 @@ public partial class MainWindow : Window
         GridSpacingComboBox.SelectedItem =
             DefaultGridSpacing;
 
+        RefreshTrunkSegmentOptions();
+
         OverallHeightSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         TrunkWidthSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkTaperSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         CanopyWidthSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         CanopyHeightSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
 
+        TrunkSegmentCountComboBox.SelectionChanged +=
+            OnGenerationSelectionChanged;
         CanopyLayerCountComboBox.SelectionChanged +=
             OnGenerationSelectionChanged;
         GridSpacingComboBox.SelectionChanged +=
@@ -153,6 +175,84 @@ public partial class MainWindow : Window
         slider.SmallChange = step;
         slider.LargeChange = step * 4.0;
         slider.Value = value;
+    }
+
+    private void RefreshTrunkSegmentOptions()
+    {
+        int previousSelection =
+            TrunkSegmentCountComboBox.SelectedItem is int selected
+                ? selected
+                : DefaultTrunkSegmentCount;
+
+        double gridSpacing =
+            ReadSelectedValue<double>(
+                GridSpacingComboBox,
+                "Grid spacing");
+
+        int overallHeightUnits =
+            Math.Max(
+                2,
+                checked(
+                    (int)Math.Round(
+                        OverallHeightSlider.Value /
+                        gridSpacing,
+                        MidpointRounding.AwayFromZero)));
+
+        int canopyHeightUnits =
+            Math.Max(
+                1,
+                checked(
+                    (int)Math.Round(
+                        CanopyHeightSlider.Value /
+                        gridSpacing,
+                        MidpointRounding.AwayFromZero)));
+
+        canopyHeightUnits =
+            Math.Min(
+                canopyHeightUnits,
+                overallHeightUnits - 1);
+
+        int trunkTopUnits =
+            Math.Min(
+                overallHeightUnits,
+                overallHeightUnits -
+                canopyHeightUnits +
+                1);
+
+        int maximumSegmentCount =
+            Math.Clamp(
+                trunkTopUnits,
+                TreeGenerationSettings.MinimumTrunkSegmentCount,
+                TreeGenerationSettings.MaximumTrunkSegmentCount);
+
+        bool previousSuppression =
+            _suppressLiveRegeneration;
+
+        _suppressLiveRegeneration = true;
+
+        try {
+            TrunkSegmentCountComboBox.Items.Clear();
+
+            for (
+                int segmentCount =
+                    TreeGenerationSettings.MinimumTrunkSegmentCount;
+                segmentCount <= maximumSegmentCount;
+                segmentCount++
+            ) {
+                TrunkSegmentCountComboBox.Items.Add(
+                    segmentCount);
+            }
+
+            TrunkSegmentCountComboBox.SelectedItem =
+                Math.Clamp(
+                    previousSelection,
+                    TreeGenerationSettings.MinimumTrunkSegmentCount,
+                    maximumSegmentCount);
+        }
+        finally {
+            _suppressLiveRegeneration =
+                previousSuppression;
+        }
     }
 
     private static void ValidateSafeControlEnvelope()
@@ -204,6 +304,21 @@ public partial class MainWindow : Window
         RoutedPropertyChangedEventArgs<double> e)
     {
         UpdateDimensionValueLabels();
+
+        if (
+            !_suppressLiveRegeneration &&
+            (
+                ReferenceEquals(
+                    sender,
+                    OverallHeightSlider) ||
+                ReferenceEquals(
+                    sender,
+                    CanopyHeightSlider)
+            )
+        ) {
+            RefreshTrunkSegmentOptions();
+        }
+
         ScheduleLiveRegeneration();
     }
 
@@ -211,6 +326,15 @@ public partial class MainWindow : Window
         object sender,
         SelectionChangedEventArgs e)
     {
+        if (
+            !_suppressLiveRegeneration &&
+            ReferenceEquals(
+                sender,
+                GridSpacingComboBox)
+        ) {
+            RefreshTrunkSegmentOptions();
+        }
+
         ScheduleLiveRegeneration();
     }
 
@@ -250,6 +374,10 @@ public partial class MainWindow : Window
             FormatUnits(
                 TrunkWidthSlider.Value);
 
+        TrunkTaperValueTextBlock.Text =
+            FormatPercent(
+                TrunkTaperSlider.Value);
+
         CanopyWidthValueTextBlock.Text =
             FormatUnits(
                 CanopyWidthSlider.Value);
@@ -264,6 +392,13 @@ public partial class MainWindow : Window
     {
         return
             $"{value.ToString("0", CultureInfo.InvariantCulture)} units";
+    }
+
+    private static string FormatPercent(
+        double value)
+    {
+        return
+            $"{value.ToString("0", CultureInfo.InvariantCulture)}%";
     }
 
     private static string FormatControlValue(
@@ -303,6 +438,28 @@ public partial class MainWindow : Window
         return
             slider.Minimum +
             (selectedTickIndex * slider.TickFrequency);
+    }
+
+    private static T SelectRandomComboBoxItem<T>(
+        ComboBox comboBox,
+        DeterministicRandom random,
+        string displayName)
+    {
+        if (comboBox.Items.Count == 0) {
+            throw new InvalidOperationException(
+                $"{displayName} does not contain any available values.");
+        }
+
+        int selectedIndex =
+            random.NextInt32(
+                comboBox.Items.Count);
+
+        if (comboBox.Items[selectedIndex] is not T value) {
+            throw new InvalidOperationException(
+                $"{displayName} contains an invalid value.");
+        }
+
+        return value;
     }
 
     private static T ReadSelectedValue<T>(
@@ -451,6 +608,19 @@ public partial class MainWindow : Window
                     CanopyHeightSlider,
                     random);
 
+            RefreshTrunkSegmentOptions();
+
+            TrunkSegmentCountComboBox.SelectedItem =
+                SelectRandomComboBoxItem<int>(
+                    TrunkSegmentCountComboBox,
+                    random,
+                    "Trunk segment count");
+
+            TrunkTaperSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkTaperSlider,
+                    random);
+
             UpdateDimensionValueLabels();
         }
         finally {
@@ -468,7 +638,7 @@ public partial class MainWindow : Window
         StatusTextBlock.Foreground =
             System.Windows.Media.Brushes.LightGreen;
         StatusTextBlock.Text =
-            "Random tree generated from a new seed and randomized safe dimensions.";
+            "Random tree generated from a new seed and randomized safe geometry controls.";
     }
 
     private void OnResetToDefaultsClick(
@@ -485,6 +655,8 @@ public partial class MainWindow : Window
                 DefaultOverallHeight;
             TrunkWidthSlider.Value =
                 DefaultTrunkWidth;
+            TrunkTaperSlider.Value =
+                DefaultTrunkTaperPercent;
             CanopyWidthSlider.Value =
                 DefaultCanopyWidth;
             CanopyHeightSlider.Value =
@@ -493,6 +665,11 @@ public partial class MainWindow : Window
                 DefaultCanopyLayerCount;
             GridSpacingComboBox.SelectedItem =
                 DefaultGridSpacing;
+
+            RefreshTrunkSegmentOptions();
+
+            TrunkSegmentCountComboBox.SelectedItem =
+                DefaultTrunkSegmentCount;
             TrunkTextureTextBox.Text =
                 DefaultTrunkTexture;
             CanopyTextureTextBox.Text =
@@ -622,6 +799,11 @@ public partial class MainWindow : Window
 
     private TreeGenerationInput ReadInput()
     {
+        int trunkSegmentCount =
+            ReadSelectedValue<int>(
+                TrunkSegmentCountComboBox,
+                "Trunk segment count");
+
         int canopyLayerCount =
             ReadSelectedValue<int>(
                 CanopyLayerCountComboBox,
@@ -647,7 +829,11 @@ public partial class MainWindow : Window
             FormatControlValue(
                 gridSpacing),
             TrunkTextureTextBox.Text,
-            CanopyTextureTextBox.Text);
+            CanopyTextureTextBox.Text,
+            trunkSegmentCount.ToString(
+                CultureInfo.InvariantCulture),
+            FormatControlValue(
+                TrunkTaperSlider.Value));
     }
 
     private void ClearResult(

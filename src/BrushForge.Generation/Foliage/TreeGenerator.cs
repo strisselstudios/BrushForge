@@ -9,8 +9,8 @@ using BrushForge.MapFormat.Model;
 namespace BrushForge.Generation.Foliage;
 
 /// <summary>
-/// Generates a low-brush-count trunk and layered box canopy suitable for
-/// preview and Valve 220 export.
+/// Generates a low-brush-count segmented trunk and layered box canopy
+/// suitable for preview and Valve 220 export.
 /// </summary>
 public static class TreeGenerator
 {
@@ -67,28 +67,14 @@ public static class TreeGenerator
             overallHeightUnits,
             canopyBottomUnits + 1);
 
-        Bounds3d trunkBounds =
-            CreateCenteredBounds(
+        List<GeneratedTreeBrush> parts =
+            TaperedTrunkGenerator.Generate(
                 origin,
                 trunkWidthUnits,
-                trunkWidthUnits,
-                origin.Z,
-                origin.Z + (trunkTopUnits * grid),
-                grid);
-
-        ConvexBrush trunkBrush =
-            AxisAlignedBoxBrushFactory.Create(
-                trunkBounds,
-                settings.TrunkTextureName);
-
-        List<GeneratedTreeBrush> parts =
-        [
-            new GeneratedTreeBrush(
-                TreeBrushRole.Trunk,
-                canopyLayerIndex: -1,
-                trunkBrush,
-                trunkBounds)
-        ];
+                trunkTopUnits,
+                grid,
+                settings.TrunkTextureName)
+                .ToList();
 
         DeterministicRandom random =
             new(settings.GenerationSeed);

@@ -19,21 +19,75 @@ public sealed class TreeGeneratorTests
                 CreateSettings(
                     canopyLayerCount: 4));
 
-        Assert.Equal(5, result.BrushCount);
-        Assert.Equal(TreeBrushRole.Trunk, result.Parts[0].Role);
-        Assert.Equal(-1, result.Parts[0].CanopyLayerIndex);
+        GeneratedTreeBrush[] trunkParts =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Trunk)
+                .ToArray();
+        GeneratedTreeBrush[] canopyParts =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+
+        Assert.Equal(3, trunkParts.Length);
+        Assert.Equal(4, canopyParts.Length);
+        Assert.Equal(7, result.BrushCount);
+        Assert.All(
+            trunkParts,
+            part =>
+                Assert.Equal(
+                    -1,
+                    part.CanopyLayerIndex));
 
         for (
             int layerIndex = 0;
-            layerIndex < 4;
+            layerIndex < canopyParts.Length;
             layerIndex++
         ) {
             Assert.Equal(
-                TreeBrushRole.Canopy,
-                result.Parts[layerIndex + 1].Role);
-            Assert.Equal(
                 layerIndex,
-                result.Parts[layerIndex + 1].CanopyLayerIndex);
+                canopyParts[layerIndex].CanopyLayerIndex);
+        }
+    }
+
+    [Fact]
+    public void GenerateBuildsContiguousTaperedFacetedTrunkSegments()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings());
+        GeneratedTreeBrush[] trunkParts =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Trunk)
+                .ToArray();
+
+        Assert.Equal(3, trunkParts.Length);
+        Assert.Equal(32.0, trunkParts[0].Bounds.Width);
+        Assert.Equal(24.0, trunkParts[^1].Bounds.Width);
+        Assert.All(
+            trunkParts,
+            part =>
+            {
+                Assert.Equal(10, part.Brush.FaceCount);
+                Assert.True(
+                    ConvexBrushValidator.Validate(
+                        part.Brush)
+                        .IsValid);
+            });
+
+        for (
+            int segmentIndex = 1;
+            segmentIndex < trunkParts.Length;
+            segmentIndex++
+        ) {
+            Assert.Equal(
+                trunkParts[segmentIndex - 1].Bounds.Maximum.Z,
+                trunkParts[segmentIndex].Bounds.Minimum.Z);
         }
     }
 
@@ -185,22 +239,17 @@ public sealed class TreeGeneratorTests
                     trunkTextureName: "BARK",
                     canopyTextureName: "{LEAVES"));
 
-        Assert.All(
-            result.Parts[0].Brush.Faces,
-            face =>
-                Assert.Equal(
-                    "BARK",
-                    face.TextureName));
+        foreach (GeneratedTreeBrush part in result.Parts) {
+            string expectedTexture =
+                part.Role == TreeBrushRole.Trunk
+                    ? "BARK"
+                    : "{LEAVES";
 
-        foreach (
-            GeneratedTreeBrush canopyPart in
-            result.Parts.Skip(1)
-        ) {
             Assert.All(
-                canopyPart.Brush.Faces,
+                part.Brush.Faces,
                 face =>
                     Assert.Equal(
-                        "{LEAVES",
+                        expectedTexture,
                         face.TextureName));
         }
     }

@@ -234,7 +234,7 @@ internal sealed class OrbitCameraController
 
         _pitchRadians =
             Math.Clamp(
-                _pitchRadians -
+                _pitchRadians +
                 (movement.Y * OrbitRadiansPerPixel),
                 MinimumPitchRadians,
                 MaximumPitchRadians);

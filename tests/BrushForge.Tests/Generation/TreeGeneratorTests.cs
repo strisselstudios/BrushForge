@@ -171,7 +171,7 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
-    public void GenerateSnapsOriginAndVerticesToGrid()
+    public void GenerateSnapsOriginAndVerticesToSupportedGridPrecision()
     {
         TreeGenerationSettings settings =
             CreateSettings()
@@ -195,6 +195,11 @@ public sealed class TreeGeneratorTests
             16.0,
             result.Parts[0].Bounds.Minimum.Z);
 
+        GridSpacing trunkHorizontalSpacing =
+            new(
+                settings.GridSpacing.Units /
+                2.0);
+
         foreach (GeneratedTreeBrush part in result.Parts) {
             BrushValidationResult validation =
                 ConvexBrushValidator.Validate(
@@ -202,23 +207,132 @@ public sealed class TreeGeneratorTests
 
             Assert.True(validation.IsValid);
 
+            GridSpacing horizontalSpacing =
+                part.Role == TreeBrushRole.Trunk
+                    ? trunkHorizontalSpacing
+                    : settings.GridSpacing;
+
             Assert.All(
                 validation.Geometry!.Vertices,
                 vertex =>
                 {
                     Assert.True(
-                        GridSpacing.Eight.IsAligned(
+                        horizontalSpacing.IsAligned(
                             vertex.X));
                     Assert.True(
-                        GridSpacing.Eight.IsAligned(
+                        horizontalSpacing.IsAligned(
                             vertex.Y));
                     Assert.True(
-                        GridSpacing.Eight.IsAligned(
+                        settings.GridSpacing.IsAligned(
                             vertex.Z));
                 });
         }
     }
 
+    [Fact]
+    public void GenerateKeepsEveryTrunkSegmentCenteredOnSnappedOrigin()
+    {
+        TreeGenerationSettings settings =
+            CreateSettings()
+                .WithOrigin(
+                    new Vector3d(
+                        5.0,
+                        11.0,
+                        19.0));
+
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                settings);
+
+        GeneratedTreeBrush[] trunkParts =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Trunk)
+                .ToArray();
+
+        Assert.True(
+            trunkParts.Length >= 2);
+
+        Assert.All(
+            trunkParts,
+            part =>
+            {
+                Assert.Equal(
+                    8.0,
+                    part.Bounds.Center.X,
+                    precision: 6);
+                Assert.Equal(
+                    8.0,
+                    part.Bounds.Center.Y,
+                    precision: 6);
+            });
+    }
+
+    [Fact]
+    public void GenerateTapersOppositeTrunkSidesByEqualDistances()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings());
+
+        GeneratedTreeBrush[] trunkParts =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Trunk)
+                .ToArray();
+
+        Assert.True(
+            trunkParts.Length >= 2);
+
+        var baseBounds =
+            trunkParts[0].Bounds;
+
+        var topBounds =
+            trunkParts[^1].Bounds;
+
+        double negativeXReduction =
+            topBounds.Minimum.X -
+            baseBounds.Minimum.X;
+
+        double positiveXReduction =
+            baseBounds.Maximum.X -
+            topBounds.Maximum.X;
+
+        double negativeYReduction =
+            topBounds.Minimum.Y -
+            baseBounds.Minimum.Y;
+
+        double positiveYReduction =
+            baseBounds.Maximum.Y -
+            topBounds.Maximum.Y;
+
+        Assert.True(
+            negativeXReduction > 0.0);
+        Assert.True(
+            negativeYReduction > 0.0);
+
+        Assert.Equal(
+            negativeXReduction,
+            positiveXReduction,
+            precision: 6);
+
+        Assert.Equal(
+            negativeYReduction,
+            positiveYReduction,
+            precision: 6);
+
+        Assert.Equal(
+            baseBounds.Center.X,
+            topBounds.Center.X,
+            precision: 6);
+
+        Assert.Equal(
+            baseBounds.Center.Y,
+            topBounds.Center.Y,
+            precision: 6);
+    }
     [Fact]
     public void GeneratePreservesRequestedOverallHeightAfterSnapping()
     {

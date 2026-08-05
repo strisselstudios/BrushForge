@@ -20,7 +20,136 @@
             <Setter Property="BorderBrush" Value="#454B55" />
             <Setter Property="CaretBrush" Value="#F5F7FA" />
         </Style>
-        <Style TargetType="Button">
+        <Style x:Key="DarkComboBoxItemStyle"
+               TargetType="{x:Type ComboBoxItem}">
+            <Setter Property="Padding" Value="9,7" />
+            <Setter Property="Foreground" Value="#F5F7FA" />
+            <Setter Property="Background" Value="#262A31" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+                        <Border x:Name="ItemBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}">
+                            <ContentPresenter VerticalAlignment="Center"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted"
+                                     Value="True">
+                                <Setter TargetName="ItemBorder"
+                                        Property="Background"
+                                        Value="#3B4657" />
+                                <Setter Property="Foreground"
+                                        Value="#FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsSelected"
+                                     Value="True">
+                                <Setter TargetName="ItemBorder"
+                                        Property="Background"
+                                        Value="#46566D" />
+                                <Setter Property="Foreground"
+                                        Value="#FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled"
+                                     Value="False">
+                                <Setter Property="Foreground"
+                                        Value="#7C8490" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="{x:Type ComboBox}">
+            <Setter Property="Margin" Value="0,5,0,12" />
+            <Setter Property="Padding" Value="9,7" />
+            <Setter Property="Foreground" Value="#F5F7FA" />
+            <Setter Property="Background" Value="#262A31" />
+            <Setter Property="BorderBrush" Value="#454B55" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="ItemContainerStyle"
+                    Value="{StaticResource DarkComboBoxItemStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ComboBox}">
+                        <Grid>
+                            <Border x:Name="ControlBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="2">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="30" />
+                                    </Grid.ColumnDefinitions>
+                                    <ContentPresenter Margin="{TemplateBinding Padding}"
+                                                      VerticalAlignment="Center"
+                                                      Content="{TemplateBinding SelectionBoxItem}"
+                                                      ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                      ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                                    <Path Grid.Column="1"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Data="M 0 0 L 5 5 L 10 0 Z"
+                                          Fill="#DCE2EA" />
+                                </Grid>
+                            </Border>
+                            <ToggleButton Background="Transparent"
+                                          BorderThickness="0"
+                                          ClickMode="Press"
+                                          Focusable="False"
+                                          IsChecked="{Binding IsDropDownOpen,
+                                                              Mode=TwoWay,
+                                                              RelativeSource={RelativeSource TemplatedParent}}" />
+                            <Popup x:Name="PART_Popup"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   Placement="Bottom"
+                                   PopupAnimation="Fade">
+                                <Border MinWidth="{Binding ActualWidth,
+                                                          RelativeSource={RelativeSource TemplatedParent}}"
+                                        MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                        Background="#262A31"
+                                        BorderBrush="#59616E"
+                                        BorderThickness="1"
+                                        CornerRadius="2">
+                                    <ScrollViewer CanContentScroll="True"
+                                                  VerticalScrollBarVisibility="Auto">
+                                        <ItemsPresenter />
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin"
+                                     Value="True">
+                                <Setter TargetName="ControlBorder"
+                                        Property="BorderBrush"
+                                        Value="#7B90AD" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled"
+                                     Value="False">
+                                <Setter TargetName="ControlBorder"
+                                        Property="Opacity"
+                                        Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="Slider">
+            <Setter Property="Margin" Value="0,4,0,12" />
+            <Setter Property="IsSnapToTickEnabled" Value="True" />
+            <Setter Property="TickPlacement" Value="None" />
+        </Style>        <Style TargetType="Button">
             <Setter Property="Padding" Value="14,8" />
             <Setter Property="Margin" Value="0,0,8,0" />
             <Setter Property="Foreground" Value="#F5F7FA" />
@@ -71,34 +200,68 @@
                         <Button DockPanel.Dock="Right"
                                 Margin="8,5,0,12"
                                 Click="OnRandomizeSeedClick"
-                                Content="Random" />
+                                Content="New Variation" />
                         <TextBox x:Name="GenerationSeedTextBox"
                                  Text="1" />
                     </DockPanel>
 
-                    <TextBlock Text="Overall height" />
-                    <TextBox x:Name="OverallHeightTextBox"
-                             Text="256" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Overall height" />
+                        <TextBlock x:Name="OverallHeightValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="256 units" />
+                    </Grid>
+                    <Slider x:Name="OverallHeightSlider" />
 
-                    <TextBlock Text="Trunk width" />
-                    <TextBox x:Name="TrunkWidthTextBox"
-                             Text="32" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk width" />
+                        <TextBlock x:Name="TrunkWidthValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="32 units" />
+                    </Grid>
+                    <Slider x:Name="TrunkWidthSlider" />
 
-                    <TextBlock Text="Canopy width" />
-                    <TextBox x:Name="CanopyWidthTextBox"
-                             Text="160" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Canopy width" />
+                        <TextBlock x:Name="CanopyWidthValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="160 units" />
+                    </Grid>
+                    <Slider x:Name="CanopyWidthSlider" />
 
-                    <TextBlock Text="Canopy height" />
-                    <TextBox x:Name="CanopyHeightTextBox"
-                             Text="128" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Canopy height" />
+                        <TextBlock x:Name="CanopyHeightValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="128 units" />
+                    </Grid>
+                    <Slider x:Name="CanopyHeightSlider" />
 
                     <TextBlock Text="Canopy layers / complexity" />
-                    <TextBox x:Name="CanopyLayerCountTextBox"
-                             Text="3" />
+                    <ComboBox x:Name="CanopyLayerCountComboBox" />
 
                     <TextBlock Text="Grid spacing" />
-                    <TextBox x:Name="GridSpacingTextBox"
-                             Text="8" />
+                    <ComboBox x:Name="GridSpacingComboBox" />
 
                     <TextBlock Text="Trunk texture" />
                     <TextBox x:Name="TrunkTextureTextBox"

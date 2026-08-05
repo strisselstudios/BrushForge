@@ -174,23 +174,25 @@ internal static class TaperedTrunkGenerator
         double grid,
         bool useOctagonalRing)
     {
-        int minimumOffsetUnits =
-            -(widthUnits / 2);
-        int maximumOffsetUnits =
-            minimumOffsetUnits +
-            widthUnits;
+        // Widths can change from an even to an odd number of grid units.
+        // Using integer offsets would shift odd-width rings by half a grid
+        // unit, causing one side of the trunk to remain visually vertical.
+        // Half-grid coordinates keep every ring centered on the same axis.
+        double halfWidth =
+            (widthUnits * grid) /
+            2.0;
         double minimumX =
-            origin.X +
-            (minimumOffsetUnits * grid);
+            origin.X -
+            halfWidth;
         double minimumY =
-            origin.Y +
-            (minimumOffsetUnits * grid);
+            origin.Y -
+            halfWidth;
         double maximumX =
             origin.X +
-            (maximumOffsetUnits * grid);
+            halfWidth;
         double maximumY =
             origin.Y +
-            (maximumOffsetUnits * grid);
+            halfWidth;
 
         if (!useOctagonalRing) {
             return

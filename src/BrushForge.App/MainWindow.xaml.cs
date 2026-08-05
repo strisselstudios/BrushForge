@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using BrushForge.App.Preview;
 using BrushForge.Core.Randomness;
 using BrushForge.Generation.Foliage;
@@ -15,18 +16,210 @@ namespace BrushForge.App;
 /// </summary>
 public partial class MainWindow : Window
 {
+    private const double DefaultOverallHeight = 256.0;
+    private const double DefaultTrunkWidth = 32.0;
+    private const double DefaultCanopyWidth = 160.0;
+    private const double DefaultCanopyHeight = 128.0;
+    private const int DefaultCanopyLayerCount = 3;
+    private const double DefaultGridSpacing = 8.0;
+
     private TreeGenerationResult? _currentResult;
     private readonly OrbitCameraController _previewCameraController;
 
     public MainWindow()
     {
         InitializeComponent();
+        InitializeConstrainedControls();
         _previewCameraController =
             new OrbitCameraController(
                 TreePreviewViewport);
         GenerateTree();
     }
 
+    private void InitializeConstrainedControls()
+    {
+        ConfigureSlider(
+            OverallHeightSlider,
+            minimum: 256.0,
+            maximum: 1024.0,
+            step: 16.0,
+            value: DefaultOverallHeight);
+
+        ConfigureSlider(
+            TrunkWidthSlider,
+            minimum: 16.0,
+            maximum: 96.0,
+            step: 16.0,
+            value: DefaultTrunkWidth);
+
+        ConfigureSlider(
+            CanopyWidthSlider,
+            minimum: 128.0,
+            maximum: 512.0,
+            step: 16.0,
+            value: DefaultCanopyWidth);
+
+        ConfigureSlider(
+            CanopyHeightSlider,
+            minimum: 128.0,
+            maximum: 240.0,
+            step: 16.0,
+            value: DefaultCanopyHeight);
+
+        for (
+            int layerCount =
+                TreeGenerationSettings.MinimumCanopyLayerCount;
+            layerCount <=
+                TreeGenerationSettings.MaximumCanopyLayerCount;
+            layerCount++
+        ) {
+            CanopyLayerCountComboBox.Items.Add(
+                layerCount);
+        }
+
+        CanopyLayerCountComboBox.SelectedItem =
+            DefaultCanopyLayerCount;
+
+        foreach (
+            double gridSpacing in
+            new[]
+            {
+                4.0,
+                8.0,
+                16.0
+            }
+        ) {
+            GridSpacingComboBox.Items.Add(
+                gridSpacing);
+        }
+
+        GridSpacingComboBox.SelectedItem =
+            DefaultGridSpacing;
+
+        OverallHeightSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkWidthSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        CanopyWidthSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        CanopyHeightSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+
+        ValidateSafeControlEnvelope();
+        UpdateDimensionValueLabels();
+    }
+
+    private static void ConfigureSlider(
+        Slider slider,
+        double minimum,
+        double maximum,
+        double step,
+        double value)
+    {
+        slider.Minimum = minimum;
+        slider.Maximum = maximum;
+        slider.TickFrequency = step;
+        slider.SmallChange = step;
+        slider.LargeChange = step * 4.0;
+        slider.Value = value;
+    }
+
+    private static void ValidateSafeControlEnvelope()
+    {
+        const double smallestOverallHeight = 256.0;
+        const double largestTrunkWidth = 96.0;
+        const double smallestCanopyWidth = 128.0;
+        const double smallestCanopyHeight = 128.0;
+        const double largestCanopyHeight = 240.0;
+        const double largestGridSpacing = 16.0;
+
+        if (
+            largestCanopyHeight >=
+            smallestOverallHeight
+        ) {
+            throw new InvalidOperationException(
+                "The canopy-height control range must remain below the minimum overall height.");
+        }
+
+        if (
+            smallestOverallHeight -
+            largestCanopyHeight <
+            largestGridSpacing
+        ) {
+            throw new InvalidOperationException(
+                "The control ranges must leave at least one maximum-size grid unit below the canopy.");
+        }
+
+        if (
+            largestTrunkWidth >
+            smallestCanopyWidth
+        ) {
+            throw new InvalidOperationException(
+                "The trunk-width control range cannot exceed the minimum canopy width.");
+        }
+
+        if (
+            smallestCanopyHeight <
+            largestGridSpacing *
+            TreeGenerationSettings.MaximumCanopyLayerCount
+        ) {
+            throw new InvalidOperationException(
+                "The canopy-height control range must support every layer at the largest grid spacing.");
+        }
+    }
+
+    private void OnDimensionSliderValueChanged(
+        object sender,
+        RoutedPropertyChangedEventArgs<double> e)
+    {
+        UpdateDimensionValueLabels();
+    }
+
+    private void UpdateDimensionValueLabels()
+    {
+        OverallHeightValueTextBlock.Text =
+            FormatUnits(
+                OverallHeightSlider.Value);
+
+        TrunkWidthValueTextBlock.Text =
+            FormatUnits(
+                TrunkWidthSlider.Value);
+
+        CanopyWidthValueTextBlock.Text =
+            FormatUnits(
+                CanopyWidthSlider.Value);
+
+        CanopyHeightValueTextBlock.Text =
+            FormatUnits(
+                CanopyHeightSlider.Value);
+    }
+
+    private static string FormatUnits(
+        double value)
+    {
+        return
+            $"{value.ToString("0", CultureInfo.InvariantCulture)} units";
+    }
+
+    private static string FormatControlValue(
+        double value)
+    {
+        return value.ToString(
+            "0",
+            CultureInfo.InvariantCulture);
+    }
+
+    private static T ReadSelectedValue<T>(
+        ComboBox comboBox,
+        string displayName)
+    {
+        if (comboBox.SelectedItem is not T value) {
+            throw new InvalidOperationException(
+                $"{displayName} does not have a valid selection.");
+        }
+
+        return value;
+    }
     private void OnGenerateClick(
         object sender,
         RoutedEventArgs e)
@@ -140,14 +333,30 @@ public partial class MainWindow : Window
 
     private TreeGenerationInput ReadInput()
     {
+        int canopyLayerCount =
+            ReadSelectedValue<int>(
+                CanopyLayerCountComboBox,
+                "Canopy layer count");
+
+        double gridSpacing =
+            ReadSelectedValue<double>(
+                GridSpacingComboBox,
+                "Grid spacing");
+
         return new TreeGenerationInput(
             GenerationSeedTextBox.Text,
-            OverallHeightTextBox.Text,
-            TrunkWidthTextBox.Text,
-            CanopyWidthTextBox.Text,
-            CanopyHeightTextBox.Text,
-            CanopyLayerCountTextBox.Text,
-            GridSpacingTextBox.Text,
+            FormatControlValue(
+                OverallHeightSlider.Value),
+            FormatControlValue(
+                TrunkWidthSlider.Value),
+            FormatControlValue(
+                CanopyWidthSlider.Value),
+            FormatControlValue(
+                CanopyHeightSlider.Value),
+            canopyLayerCount.ToString(
+                CultureInfo.InvariantCulture),
+            FormatControlValue(
+                gridSpacing),
             TrunkTextureTextBox.Text,
             CanopyTextureTextBox.Text);
     }

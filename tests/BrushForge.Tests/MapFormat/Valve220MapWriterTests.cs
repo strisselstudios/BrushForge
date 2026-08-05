@@ -44,7 +44,27 @@ public sealed class Valve220MapWriterTests
             Valve220MapWriter.Serialize(document);
 
         Assert.Contains(
-            "( 0 0 0 ) ( 0 64 0 ) ( 64 0 0 ) STONE [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1\r\n",
+            "( 0 0 0 ) ( 64 0 0 ) ( 0 64 0 ) STONE [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1\r\n",
+            serialized);
+
+        Assert.Contains(
+            "( 0 0 64 ) ( 0 64 64 ) ( 64 0 64 ) STONE [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1\r\n",
+            serialized);
+
+        Assert.Contains(
+            "( 0 0 0 ) ( 0 64 0 ) ( 0 0 64 ) STONE [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1\r\n",
+            serialized);
+
+        Assert.Contains(
+            "( 64 0 0 ) ( 64 0 64 ) ( 64 64 0 ) STONE [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1\r\n",
+            serialized);
+
+        Assert.Contains(
+            "( 0 0 0 ) ( 0 0 64 ) ( 64 0 0 ) STONE [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1\r\n",
+            serialized);
+
+        Assert.Contains(
+            "( 0 64 0 ) ( 64 64 0 ) ( 0 64 64 ) STONE [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1\r\n",
             serialized);
     }
 

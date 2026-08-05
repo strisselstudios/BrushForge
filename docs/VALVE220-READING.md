@@ -49,7 +49,14 @@ WAD textures.
 Opening braces anywhere except the first character remain invalid. Closing
 braces remain invalid because texture names are unquoted in brush-face syntax.
 
-## 6. Structural validation
+## 6. Plane winding conversion
+
+Valve and TrenchBroom face points use the opposite winding from BrushForge's
+internal outward-normal convention. The reader swaps the second and third
+points while constructing each internal BrushFace. The writer performs the
+inverse conversion during export.
+
+## 7. Structural validation
 
 The reader constructs the same immutable model used by generated maps.
 
@@ -57,14 +64,14 @@ A parsed brush must contain at least four distinct oriented face planes.
 Complete closure, volume, and convexity validation remains the responsibility
 of ConvexBrushValidator and MapExportValidator.
 
-## 7. Encoding
+## 8. Encoding
 
 ParseFile reads strict UTF-8 and accepts files with or without a UTF-8
 byte-order mark.
 
 The writer continues to emit UTF-8 without a byte-order mark.
 
-## 8. Round trips
+## 9. Round trips
 
 Canonical output must satisfy:
 

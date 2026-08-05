@@ -92,6 +92,41 @@ public sealed class Valve220MapReaderTests
     }
 
     [Fact]
+    public void ParsesKnownTrenchBroomBoxWinding()
+    {
+        const string source =
+            "{\n" +
+            "\"classname\" \"worldspawn\"\n" +
+            "{\n" +
+            "( 0 0 0 ) ( 64 0 0 ) ( 0 64 0 ) STONE [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1\n" +
+            "( 0 0 64 ) ( 0 64 64 ) ( 64 0 64 ) STONE [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1\n" +
+            "( 0 0 0 ) ( 0 64 0 ) ( 0 0 64 ) STONE [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1\n" +
+            "( 64 0 0 ) ( 64 0 64 ) ( 64 64 0 ) STONE [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1\n" +
+            "( 0 0 0 ) ( 0 0 64 ) ( 64 0 0 ) STONE [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1\n" +
+            "( 0 64 0 ) ( 64 64 0 ) ( 0 64 64 ) STONE [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1\n" +
+            "}\n" +
+            "}\n";
+
+        MapDocument document =
+            Valve220MapReader.Parse(source);
+
+        BrushValidationResult validation =
+            ConvexBrushValidator.Validate(
+                document.Worldspawn!.Brushes[0]);
+
+        Assert.True(validation.IsValid);
+        Assert.Equal(
+            Vector3d.Zero,
+            validation.Geometry!.Bounds.Minimum);
+        Assert.Equal(
+            new Vector3d(
+                64.0,
+                64.0,
+                64.0),
+            validation.Geometry.Bounds.Maximum);
+    }
+
+    [Fact]
     public void PreservesDuplicateProperties()
     {
         const string source =

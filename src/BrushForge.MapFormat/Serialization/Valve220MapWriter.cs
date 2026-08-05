@@ -166,13 +166,13 @@ public static class Valve220MapWriter
 
         WritePoint(
             writer,
-            face.PlanePoints.Second);
+            face.PlanePoints.Third);
 
         writer.Write(' ');
 
         WritePoint(
             writer,
-            face.PlanePoints.Third);
+            face.PlanePoints.Second);
 
         writer.Write(' ');
         writer.Write(face.TextureName);

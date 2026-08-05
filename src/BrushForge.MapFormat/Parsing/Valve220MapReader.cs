@@ -263,8 +263,8 @@ public static class Valve220MapReader
                 PlanePoints3d planePoints =
                     new(
                         first,
-                        second,
-                        third);
+                        third,
+                        second);
 
                 Valve220TextureAxes axes =
                     new(

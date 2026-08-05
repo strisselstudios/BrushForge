@@ -1,0 +1,118 @@
+using System.Globalization;
+using BrushForge.Core.Grid;
+using BrushForge.Core.Randomness;
+using BrushForge.Geometry.Vectors;
+
+namespace BrushForge.Generation.Foliage.Input;
+
+/// <summary>
+/// Converts invariant user-interface text into validated tree settings.
+/// </summary>
+public static class TreeGenerationInputParser
+{
+    public static TreeGenerationSettings Parse(
+        TreeGenerationInput input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
+        GenerationSeed generationSeed =
+            ParseGenerationSeed(
+                input.GenerationSeed);
+
+        double overallHeight =
+            ParsePositiveDouble(
+                input.OverallHeight,
+                "Overall height");
+
+        double trunkWidth =
+            ParsePositiveDouble(
+                input.TrunkWidth,
+                "Trunk width");
+
+        double canopyWidth =
+            ParsePositiveDouble(
+                input.CanopyWidth,
+                "Canopy width");
+
+        double canopyHeight =
+            ParsePositiveDouble(
+                input.CanopyHeight,
+                "Canopy height");
+
+        int canopyLayerCount =
+            ParsePositiveInteger(
+                input.CanopyLayerCount,
+                "Canopy layer count");
+
+        double gridUnits =
+            ParsePositiveDouble(
+                input.GridSpacing,
+                "Grid spacing");
+
+        return new TreeGenerationSettings(
+            Vector3d.Zero,
+            overallHeight,
+            trunkWidth,
+            canopyWidth,
+            canopyHeight,
+            canopyLayerCount,
+            generationSeed,
+            new GridSpacing(gridUnits),
+            input.TrunkTextureName,
+            input.CanopyTextureName);
+    }
+
+    private static GenerationSeed ParseGenerationSeed(
+        string text)
+    {
+        if (
+            !GenerationSeed.TryParse(
+                text,
+                out GenerationSeed generationSeed)
+        ) {
+            throw new FormatException(
+                "Generation seed must be an unsigned 64-bit integer.");
+        }
+
+        return generationSeed;
+    }
+
+    private static double ParsePositiveDouble(
+        string text,
+        string displayName)
+    {
+        if (
+            !double.TryParse(
+                text,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out double value) ||
+            !double.IsFinite(value) ||
+            value <= 0.0
+        ) {
+            throw new FormatException(
+                $"{displayName} must be a finite number greater than zero using a period as the decimal separator.");
+        }
+
+        return value;
+    }
+
+    private static int ParsePositiveInteger(
+        string text,
+        string displayName)
+    {
+        if (
+            !int.TryParse(
+                text,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out int value) ||
+            value <= 0
+        ) {
+            throw new FormatException(
+                $"{displayName} must be a positive whole number.");
+        }
+
+        return value;
+    }
+}

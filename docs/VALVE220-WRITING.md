@@ -36,8 +36,11 @@ Brush faces are written using Valve 220 syntax:
 
 ( p1 ) ( p2 ) ( p3 ) texture [ ux uy uz uOffset ] [ vx vy vz vOffset ] rotation uScale vScale
 
-The three points retain their original orientation and define the infinite
-brush plane.
+BrushForge stores internal brush planes with outward-facing normals. Valve and
+TrenchBroom brush files use the opposite three-point winding convention, so the
+writer swaps the second and third points at the serialization boundary. This
+preserves BrushForge's internal half-space convention while producing non-empty
+TrenchBroom brushes.
 
 ## 5. Numeric formatting
 

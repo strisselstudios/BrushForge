@@ -196,14 +196,18 @@
 
                     <TextBlock Margin="0,14,0,0"
                                Text="Generation seed" />
-                    <DockPanel LastChildFill="True">
-                        <Button DockPanel.Dock="Right"
-                                Margin="8,5,0,12"
-                                Click="OnRandomizeSeedClick"
+                    <TextBox x:Name="GenerationSeedTextBox"
+                             Margin="0,5,0,6"
+                             MaxLength="20"
+                             KeyDown="OnGenerationSeedKeyDown"
+                             Text="1"
+                             ToolTip="Unsigned 64-bit seed (up to 20 digits)." />
+                    <WrapPanel Margin="0,0,0,12">
+                        <Button Click="OnApplySeedClick"
+                                Content="Apply Seed" />
+                        <Button Click="OnRandomizeSeedClick"
                                 Content="New Variation" />
-                        <TextBox x:Name="GenerationSeedTextBox"
-                                 Text="1" />
-                    </DockPanel>
+                    </WrapPanel>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -265,15 +269,22 @@
 
                     <TextBlock Text="Trunk texture" />
                     <TextBox x:Name="TrunkTextureTextBox"
+                             KeyDown="OnTextureNameKeyDown"
                              Text="WOOD" />
 
                     <TextBlock Text="Canopy texture" />
                     <TextBox x:Name="CanopyTextureTextBox"
+                             KeyDown="OnTextureNameKeyDown"
                              Text="LEAF" />
 
+                    <Button HorizontalAlignment="Left"
+                            Margin="0,0,0,12"
+                            Click="OnApplyTextureNamesClick"
+                            Content="Apply Texture Names" />
+
                     <WrapPanel Margin="0,8,0,0">
-                        <Button Click="OnGenerateClick"
-                                Content="Generate Tree" />
+                        <Button Click="OnRandomTreeClick"
+                                Content="Random Tree" />
                         <Button Click="OnResetToDefaultsClick"
                                 Content="Reset to Defaults" />
                         <Button x:Name="ExportButton"

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Threading;
 using BrushForge.App.Preview;
 using BrushForge.Core.Randomness;
@@ -273,6 +274,37 @@ public partial class MainWindow : Window
             CultureInfo.InvariantCulture);
     }
 
+    private static double SelectRandomSliderTick(
+        Slider slider,
+        DeterministicRandom random)
+    {
+        if (
+            slider.TickFrequency <= 0.0 ||
+            slider.Maximum < slider.Minimum
+        ) {
+            throw new InvalidOperationException(
+                "A randomized slider must have a valid positive tick range.");
+        }
+
+        double tickSpan =
+            (slider.Maximum - slider.Minimum) /
+            slider.TickFrequency;
+
+        int maximumTickIndex =
+            checked(
+                (int)Math.Round(
+                    tickSpan,
+                    MidpointRounding.AwayFromZero));
+
+        int selectedTickIndex =
+            random.NextInt32(
+                maximumTickIndex + 1);
+
+        return
+            slider.Minimum +
+            (selectedTickIndex * slider.TickFrequency);
+    }
+
     private static T ReadSelectedValue<T>(
         ComboBox comboBox,
         string displayName)
@@ -284,15 +316,79 @@ public partial class MainWindow : Window
 
         return value;
     }
-    private void OnGenerateClick(
+
+    private void OnApplySeedClick(
         object sender,
         RoutedEventArgs e)
     {
+        ApplySeed();
+    }
+
+    private void OnGenerationSeedKeyDown(
+        object sender,
+        KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) {
+            return;
+        }
+
+        e.Handled = true;
+        ApplySeed();
+    }
+
+    private void ApplySeed()
+    {
         _liveRegenerationTimer.Stop();
 
-        GenerateTree(
-            resetCamera: true,
-            isAutomatic: false);
+        if (
+            !GenerateTree(
+                resetCamera: true,
+                isAutomatic: false)
+        ) {
+            return;
+        }
+
+        StatusTextBlock.Foreground =
+            System.Windows.Media.Brushes.LightGreen;
+        StatusTextBlock.Text =
+            "Seed applied and tree regenerated.";
+    }
+
+    private void OnApplyTextureNamesClick(
+        object sender,
+        RoutedEventArgs e)
+    {
+        ApplyTextureNames();
+    }
+
+    private void OnTextureNameKeyDown(
+        object sender,
+        KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) {
+            return;
+        }
+
+        e.Handled = true;
+        ApplyTextureNames();
+    }
+
+    private void ApplyTextureNames()
+    {
+        _liveRegenerationTimer.Stop();
+
+        if (
+            !GenerateTree(
+                resetCamera: false,
+                isAutomatic: false)
+        ) {
+            return;
+        }
+
+        StatusTextBlock.Foreground =
+            System.Windows.Media.Brushes.LightGreen;
+        StatusTextBlock.Text =
+            "Texture names applied to the current tree and future .map exports.";
     }
 
     private void OnRandomizeSeedClick(
@@ -306,9 +402,73 @@ public partial class MainWindow : Window
                 .CreateRandom()
                 .ToString();
 
-        GenerateTree(
-            resetCamera: true,
-            isAutomatic: false);
+        if (
+            !GenerateTree(
+                resetCamera: true,
+                isAutomatic: false)
+        ) {
+            return;
+        }
+
+        StatusTextBlock.Foreground =
+            System.Windows.Media.Brushes.LightGreen;
+        StatusTextBlock.Text =
+            "New variation generated from the current tree settings.";
+    }
+
+    private void OnRandomTreeClick(
+        object sender,
+        RoutedEventArgs e)
+    {
+        _liveRegenerationTimer.Stop();
+
+        GenerationSeed randomSeed =
+            GenerationSeed.CreateRandom();
+
+        DeterministicRandom random =
+            new(
+                randomSeed);
+
+        _suppressLiveRegeneration = true;
+
+        try {
+            GenerationSeedTextBox.Text =
+                randomSeed.ToString();
+            OverallHeightSlider.Value =
+                SelectRandomSliderTick(
+                    OverallHeightSlider,
+                    random);
+            TrunkWidthSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkWidthSlider,
+                    random);
+            CanopyWidthSlider.Value =
+                SelectRandomSliderTick(
+                    CanopyWidthSlider,
+                    random);
+            CanopyHeightSlider.Value =
+                SelectRandomSliderTick(
+                    CanopyHeightSlider,
+                    random);
+
+            UpdateDimensionValueLabels();
+        }
+        finally {
+            _suppressLiveRegeneration = false;
+        }
+
+        if (
+            !GenerateTree(
+                resetCamera: true,
+                isAutomatic: false)
+        ) {
+            return;
+        }
+
+        StatusTextBlock.Foreground =
+            System.Windows.Media.Brushes.LightGreen;
+        StatusTextBlock.Text =
+            "Random tree generated from a new seed and randomized safe dimensions.";
     }
 
     private void OnResetToDefaultsClick(
@@ -344,9 +504,13 @@ public partial class MainWindow : Window
             _suppressLiveRegeneration = false;
         }
 
-        GenerateTree(
-            resetCamera: true,
-            isAutomatic: false);
+        if (
+            !GenerateTree(
+                resetCamera: true,
+                isAutomatic: false)
+        ) {
+            return;
+        }
 
         StatusTextBlock.Foreground =
             System.Windows.Media.Brushes.LightGreen;
@@ -400,7 +564,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void GenerateTree(
+    private bool GenerateTree(
         bool resetCamera,
         bool isAutomatic)
     {
@@ -437,6 +601,8 @@ public partial class MainWindow : Window
                 isAutomatic
                     ? "Preview updated automatically from the current controls."
                     : "Tree generated from the current parameters. The preview uses the actual generated brush faces.";
+
+            return true;
         }
         catch (FormatException exception) {
             ClearResult(exception.Message);
@@ -450,6 +616,8 @@ public partial class MainWindow : Window
         catch (InvalidOperationException exception) {
             ClearResult(exception.Message);
         }
+
+        return false;
     }
 
     private TreeGenerationInput ReadInput()

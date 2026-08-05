@@ -271,15 +271,16 @@
                     <TextBox x:Name="CanopyTextureTextBox"
                              Text="LEAF" />
 
-                    <StackPanel Margin="0,8,0,0"
-                                Orientation="Horizontal">
+                    <WrapPanel Margin="0,8,0,0">
                         <Button Click="OnGenerateClick"
                                 Content="Generate Tree" />
+                        <Button Click="OnResetToDefaultsClick"
+                                Content="Reset to Defaults" />
                         <Button x:Name="ExportButton"
                                 Click="OnExportClick"
                                 Content="Export .map"
                                 IsEnabled="False" />
-                    </StackPanel>
+                    </WrapPanel>
                 </StackPanel>
             </ScrollViewer>
         </Border>

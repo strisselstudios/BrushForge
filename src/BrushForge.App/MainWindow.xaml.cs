@@ -17,12 +17,15 @@ namespace BrushForge.App;
 /// </summary>
 public partial class MainWindow : Window
 {
+    private const string DefaultGenerationSeed = "1";
     private const double DefaultOverallHeight = 256.0;
     private const double DefaultTrunkWidth = 32.0;
     private const double DefaultCanopyWidth = 160.0;
     private const double DefaultCanopyHeight = 128.0;
     private const int DefaultCanopyLayerCount = 3;
     private const double DefaultGridSpacing = 8.0;
+    private const string DefaultTrunkTexture = "WOOD";
+    private const string DefaultCanopyTexture = "LEAF";
 
     private static readonly TimeSpan LiveRegenerationDelay =
         TimeSpan.FromMilliseconds(
@@ -31,6 +34,7 @@ public partial class MainWindow : Window
     private TreeGenerationResult? _currentResult;
     private readonly OrbitCameraController _previewCameraController;
     private readonly DispatcherTimer _liveRegenerationTimer;
+    private bool _suppressLiveRegeneration;
 
     public MainWindow()
     {
@@ -211,6 +215,10 @@ public partial class MainWindow : Window
 
     private void ScheduleLiveRegeneration()
     {
+        if (_suppressLiveRegeneration) {
+            return;
+        }
+
         _liveRegenerationTimer.Stop();
         _liveRegenerationTimer.Start();
 
@@ -301,6 +309,49 @@ public partial class MainWindow : Window
         GenerateTree(
             resetCamera: true,
             isAutomatic: false);
+    }
+
+    private void OnResetToDefaultsClick(
+        object sender,
+        RoutedEventArgs e)
+    {
+        _liveRegenerationTimer.Stop();
+        _suppressLiveRegeneration = true;
+
+        try {
+            GenerationSeedTextBox.Text =
+                DefaultGenerationSeed;
+            OverallHeightSlider.Value =
+                DefaultOverallHeight;
+            TrunkWidthSlider.Value =
+                DefaultTrunkWidth;
+            CanopyWidthSlider.Value =
+                DefaultCanopyWidth;
+            CanopyHeightSlider.Value =
+                DefaultCanopyHeight;
+            CanopyLayerCountComboBox.SelectedItem =
+                DefaultCanopyLayerCount;
+            GridSpacingComboBox.SelectedItem =
+                DefaultGridSpacing;
+            TrunkTextureTextBox.Text =
+                DefaultTrunkTexture;
+            CanopyTextureTextBox.Text =
+                DefaultCanopyTexture;
+
+            UpdateDimensionValueLabels();
+        }
+        finally {
+            _suppressLiveRegeneration = false;
+        }
+
+        GenerateTree(
+            resetCamera: true,
+            isAutomatic: false);
+
+        StatusTextBlock.Foreground =
+            System.Windows.Media.Brushes.LightGreen;
+        StatusTextBlock.Text =
+            "Default tree settings restored.";
     }
 
     private void OnExportClick(

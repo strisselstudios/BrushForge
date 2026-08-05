@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using BrushForge.App.Preview;
 using BrushForge.Core.Randomness;
 using BrushForge.Generation.Foliage;
@@ -23,17 +24,37 @@ public partial class MainWindow : Window
     private const int DefaultCanopyLayerCount = 3;
     private const double DefaultGridSpacing = 8.0;
 
+    private static readonly TimeSpan LiveRegenerationDelay =
+        TimeSpan.FromMilliseconds(
+            100.0);
+
     private TreeGenerationResult? _currentResult;
     private readonly OrbitCameraController _previewCameraController;
+    private readonly DispatcherTimer _liveRegenerationTimer;
 
     public MainWindow()
     {
         InitializeComponent();
+
+        _liveRegenerationTimer =
+            new DispatcherTimer
+            {
+                Interval =
+                    LiveRegenerationDelay
+            };
+
+        _liveRegenerationTimer.Tick +=
+            OnLiveRegenerationTimerTick;
+
         InitializeConstrainedControls();
+
         _previewCameraController =
             new OrbitCameraController(
                 TreePreviewViewport);
-        GenerateTree();
+
+        GenerateTree(
+            resetCamera: true,
+            isAutomatic: false);
     }
 
     private void InitializeConstrainedControls()
@@ -105,6 +126,11 @@ public partial class MainWindow : Window
         CanopyHeightSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
 
+        CanopyLayerCountComboBox.SelectionChanged +=
+            OnGenerationSelectionChanged;
+        GridSpacingComboBox.SelectionChanged +=
+            OnGenerationSelectionChanged;
+
         ValidateSafeControlEnvelope();
         UpdateDimensionValueLabels();
     }
@@ -173,6 +199,36 @@ public partial class MainWindow : Window
         RoutedPropertyChangedEventArgs<double> e)
     {
         UpdateDimensionValueLabels();
+        ScheduleLiveRegeneration();
+    }
+
+    private void OnGenerationSelectionChanged(
+        object sender,
+        SelectionChangedEventArgs e)
+    {
+        ScheduleLiveRegeneration();
+    }
+
+    private void ScheduleLiveRegeneration()
+    {
+        _liveRegenerationTimer.Stop();
+        _liveRegenerationTimer.Start();
+
+        StatusTextBlock.Foreground =
+            System.Windows.Media.Brushes.LightBlue;
+        StatusTextBlock.Text =
+            "Updating the preview from the current controls...";
+    }
+
+    private void OnLiveRegenerationTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        _liveRegenerationTimer.Stop();
+
+        GenerateTree(
+            resetCamera: false,
+            isAutomatic: true);
     }
 
     private void UpdateDimensionValueLabels()
@@ -224,19 +280,27 @@ public partial class MainWindow : Window
         object sender,
         RoutedEventArgs e)
     {
-        GenerateTree();
+        _liveRegenerationTimer.Stop();
+
+        GenerateTree(
+            resetCamera: true,
+            isAutomatic: false);
     }
 
     private void OnRandomizeSeedClick(
         object sender,
         RoutedEventArgs e)
     {
+        _liveRegenerationTimer.Stop();
+
         GenerationSeedTextBox.Text =
             GenerationSeed
                 .CreateRandom()
                 .ToString();
 
-        GenerateTree();
+        GenerateTree(
+            resetCamera: true,
+            isAutomatic: false);
     }
 
     private void OnExportClick(
@@ -285,7 +349,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void GenerateTree()
+    private void GenerateTree(
+        bool resetCamera,
+        bool isAutomatic)
     {
         try {
             TreeGenerationSettings settings =
@@ -302,8 +368,10 @@ public partial class MainWindow : Window
             TreePreviewRenderer.Render(
                 TreePreviewViewport,
                 result);
-            _previewCameraController.Reset(
-                result.Bounds);
+            if (resetCamera) {
+                _previewCameraController.Reset(
+                    result.Bounds);
+            }
 
             PreviewSummaryTextBlock.Text =
                 $"{result.BrushCount.ToString(CultureInfo.InvariantCulture)} brushes | " +
@@ -315,7 +383,9 @@ public partial class MainWindow : Window
                 System.Windows.Media.Brushes.LightGreen;
 
             StatusTextBlock.Text =
-                "Tree generated from the current parameters. The preview uses the actual generated brush faces.";
+                isAutomatic
+                    ? "Preview updated automatically from the current controls."
+                    : "Tree generated from the current parameters. The preview uses the actual generated brush faces.";
         }
         catch (FormatException exception) {
             ClearResult(exception.Message);
@@ -371,6 +441,13 @@ public partial class MainWindow : Window
             "No valid tree is currently available.";
 
         SetError(message);
+    }
+
+    protected override void OnClosed(
+        EventArgs e)
+    {
+        _liveRegenerationTimer.Stop();
+        base.OnClosed(e);
     }
 
     private void SetError(

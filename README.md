@@ -1,16 +1,24 @@
-﻿# BrushForge
+# BrushForge
 
-BrushForge is a Windows desktop application for generating valid convex brush geometry and exporting TrenchBroom-compatible Valve 220 `.map` files.
+BrushForge is a Windows desktop application for generating valid convex brush geometry and exporting editable TrenchBroom-compatible Valve 220 `.map` files.
 
-## Planned workspaces
+## Repository structure
 
-1. Terrain
-2. Rocks
-3. Bushes and trees
-4. Shared project, texture, preview, and export tools
+- `src/` contains the BrushForge application and supporting libraries.
+- `tests/BrushForge.Tests/` contains the automated test suite.
+- `docs/` contains technical documentation for implemented systems.
+- `BrushForge.sln` is the main Visual Studio solution.
 
-## Current phase
+## Build
 
-Shared geometry and map-format foundation.
+From the repository root:
 
-Terrain generation must not be implemented until the core coordinate system, geometry representation, convex-brush validation, deterministic seed infrastructure, and Valve 220 serialization tests are established.
+```powershell
+dotnet build .\BrushForge.sln --configuration Debug
+```
+
+## Test
+
+```powershell
+dotnet test .\tests\BrushForge.Tests\BrushForge.Tests.csproj --configuration Debug
+```

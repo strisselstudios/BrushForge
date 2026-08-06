@@ -82,6 +82,17 @@ public static class TreeGenerationInputParser
                     100.0,
                 displayName: "Trunk bend");
 
+        double trunkBaseFlarePercent =
+            ParseBoundedDouble(
+                input.TrunkBaseFlarePercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkBaseFlare *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkBaseFlare *
+                    100.0,
+                displayName: "Trunk base flare");
+
         double gridUnits =
             ParsePositiveDouble(
                 input.GridSpacing,
@@ -101,7 +112,8 @@ public static class TreeGenerationInputParser
             trunkSegmentCount,
             trunkTaperPercent / 100.0,
             trunkLeanPercent / 100.0,
-            trunkBendPercent / 100.0);
+            trunkBendPercent / 100.0,
+            trunkBaseFlarePercent / 100.0);
     }
 
     private static GenerationSeed ParseGenerationSeed(

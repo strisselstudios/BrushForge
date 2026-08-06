@@ -286,6 +286,20 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk base flare" />
+                        <TextBlock x:Name="TrunkBaseFlareValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkBaseFlareSlider"
+                            ToolTip="Widens and shifts the lowest trunk ring in a seed-selected cardinal direction. Higher trunk rings keep their existing path." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <TextBlock Text="Canopy width" />
                         <TextBlock x:Name="CanopyWidthValueTextBlock"
                                    Grid.Column="1"

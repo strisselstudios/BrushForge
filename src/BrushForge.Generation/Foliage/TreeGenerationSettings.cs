@@ -26,6 +26,9 @@ public sealed record TreeGenerationSettings
     public const double MinimumTrunkBend = 0.0;
     public const double MaximumTrunkBend = 0.20;
     public const double DefaultTrunkBend = 0.0;
+    public const double MinimumTrunkBaseFlare = 0.0;
+    public const double MaximumTrunkBaseFlare = 1.0;
+    public const double DefaultTrunkBaseFlare = 0.0;
     public const int MaximumGridUnitCount = 1_000_000;
     public const double MaximumDimension = 131_072.0;
 
@@ -43,7 +46,8 @@ public sealed record TreeGenerationSettings
         int trunkSegmentCount = DefaultTrunkSegmentCount,
         double trunkTaper = DefaultTrunkTaper,
         double trunkLean = DefaultTrunkLean,
-        double trunkBend = DefaultTrunkBend)
+        double trunkBend = DefaultTrunkBend,
+        double trunkBaseFlare = DefaultTrunkBaseFlare)
     {
         if (!origin.IsFinite) {
             throw new ArgumentOutOfRangeException(
@@ -114,6 +118,13 @@ public sealed record TreeGenerationSettings
             MaximumTrunkBend,
             nameof(trunkBend),
             "Trunk bend");
+
+        ValidateTrunkDeformation(
+            trunkBaseFlare,
+            MinimumTrunkBaseFlare,
+            MaximumTrunkBaseFlare,
+            nameof(trunkBaseFlare),
+            "Trunk base flare");
 
         if (canopyHeight >= overallHeight) {
             throw new ArgumentOutOfRangeException(
@@ -202,6 +213,7 @@ public sealed record TreeGenerationSettings
         TrunkTaper = trunkTaper;
         TrunkLean = trunkLean;
         TrunkBend = trunkBend;
+        TrunkBaseFlare = trunkBaseFlare;
     }
 
     public Vector3d Origin { get; }
@@ -231,6 +243,8 @@ public sealed record TreeGenerationSettings
     public double TrunkLean { get; }
 
     public double TrunkBend { get; }
+
+    public double TrunkBaseFlare { get; }
 
     public static TreeGenerationSettings CreateDefault(
         BrushForgeProjectSettings projectSettings)
@@ -270,7 +284,8 @@ public sealed record TreeGenerationSettings
             TrunkSegmentCount,
             TrunkTaper,
             TrunkLean,
-            TrunkBend);
+            TrunkBend,
+            TrunkBaseFlare);
     }
 
     public TreeGenerationSettings WithDimensions(
@@ -294,7 +309,8 @@ public sealed record TreeGenerationSettings
             TrunkSegmentCount,
             TrunkTaper,
             TrunkLean,
-            TrunkBend);
+            TrunkBend,
+            TrunkBaseFlare);
     }
 
     public TreeGenerationSettings WithGenerationSeed(
@@ -314,7 +330,8 @@ public sealed record TreeGenerationSettings
             TrunkSegmentCount,
             TrunkTaper,
             TrunkLean,
-            TrunkBend);
+            TrunkBend,
+            TrunkBaseFlare);
     }
 
     public TreeGenerationSettings WithTextures(
@@ -335,7 +352,8 @@ public sealed record TreeGenerationSettings
             TrunkSegmentCount,
             TrunkTaper,
             TrunkLean,
-            TrunkBend);
+            TrunkBend,
+            TrunkBaseFlare);
     }
 
     public TreeGenerationSettings WithTrunkShape(
@@ -356,7 +374,8 @@ public sealed record TreeGenerationSettings
             trunkSegmentCount,
             trunkTaper,
             TrunkLean,
-            TrunkBend);
+            TrunkBend,
+            TrunkBaseFlare);
     }
 
     public TreeGenerationSettings WithTrunkDeformation(
@@ -377,7 +396,29 @@ public sealed record TreeGenerationSettings
             TrunkSegmentCount,
             TrunkTaper,
             trunkLean,
-            trunkBend);
+            trunkBend,
+            TrunkBaseFlare);
+    }
+
+    public TreeGenerationSettings WithTrunkBaseFlare(
+        double trunkBaseFlare)
+    {
+        return new TreeGenerationSettings(
+            Origin,
+            OverallHeight,
+            TrunkWidth,
+            CanopyWidth,
+            CanopyHeight,
+            CanopyLayerCount,
+            GenerationSeed,
+            GridSpacing,
+            TrunkTextureName,
+            CanopyTextureName,
+            TrunkSegmentCount,
+            TrunkTaper,
+            TrunkLean,
+            TrunkBend,
+            trunkBaseFlare);
     }
 
     private static int CalculateTrunkTopUnitCount(

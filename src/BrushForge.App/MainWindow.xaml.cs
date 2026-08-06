@@ -32,6 +32,9 @@ public partial class MainWindow : Window
     private const double DefaultTrunkBendPercent =
         TreeGenerationSettings.DefaultTrunkBend *
         100.0;
+    private const double DefaultTrunkBaseFlarePercent =
+        TreeGenerationSettings.DefaultTrunkBaseFlare *
+        100.0;
     private const double DefaultCanopyWidth = 160.0;
     private const double DefaultCanopyHeight = 128.0;
     private const int DefaultCanopyLayerCount = 3;
@@ -123,6 +126,17 @@ public partial class MainWindow : Window
             value: DefaultTrunkBendPercent);
 
         ConfigureSlider(
+            TrunkBaseFlareSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkBaseFlare *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkBaseFlare *
+                100.0,
+            step: 25.0,
+            value: DefaultTrunkBaseFlarePercent);
+
+        ConfigureSlider(
             CanopyWidthSlider,
             minimum: 128.0,
             maximum: 512.0,
@@ -177,6 +191,8 @@ public partial class MainWindow : Window
         TrunkLeanSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         TrunkBendSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkBaseFlareSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         CanopyWidthSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
@@ -417,6 +433,10 @@ public partial class MainWindow : Window
         TrunkBendValueTextBlock.Text =
             FormatPercent(
                 TrunkBendSlider.Value);
+
+        TrunkBaseFlareValueTextBlock.Text =
+            FormatPercent(
+                TrunkBaseFlareSlider.Value);
 
         CanopyWidthValueTextBlock.Text =
             FormatUnits(
@@ -668,6 +688,10 @@ public partial class MainWindow : Window
                 SelectRandomSliderTick(
                     TrunkBendSlider,
                     random);
+            TrunkBaseFlareSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkBaseFlareSlider,
+                    random);
 
             UpdateDimensionValueLabels();
         }
@@ -709,6 +733,8 @@ public partial class MainWindow : Window
                 DefaultTrunkLeanPercent;
             TrunkBendSlider.Value =
                 DefaultTrunkBendPercent;
+            TrunkBaseFlareSlider.Value =
+                DefaultTrunkBaseFlarePercent;
             CanopyWidthSlider.Value =
                 DefaultCanopyWidth;
             CanopyHeightSlider.Value =
@@ -889,7 +915,9 @@ public partial class MainWindow : Window
             FormatControlValue(
                 TrunkLeanSlider.Value),
             FormatControlValue(
-                TrunkBendSlider.Value));
+                TrunkBendSlider.Value),
+            FormatControlValue(
+                TrunkBaseFlareSlider.Value));
     }
 
     private void ClearResult(

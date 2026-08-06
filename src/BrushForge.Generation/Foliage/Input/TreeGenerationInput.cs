@@ -16,4 +16,5 @@ public sealed record TreeGenerationInput(
     string TrunkSegmentCount = "3",
     string TrunkTaperPercent = "25",
     string TrunkLeanPercent = "0",
-    string TrunkBendPercent = "0");
+    string TrunkBendPercent = "0",
+    string TrunkBaseFlarePercent = "0");

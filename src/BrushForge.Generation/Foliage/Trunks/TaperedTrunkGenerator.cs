@@ -14,6 +14,9 @@ internal static class TaperedTrunkGenerator
     private const ulong DeformationSeedSalt =
         0xD1B54A32D192ED03UL;
 
+    private const ulong BaseFlareSeedSalt =
+        0x94D049BB133111EBUL;
+
     public static GeneratedTrunk Generate(
         Vector3d origin,
         int trunkWidthUnits,
@@ -22,6 +25,7 @@ internal static class TaperedTrunkGenerator
         double taper,
         double lean,
         double bend,
+        double baseFlare,
         GenerationSeed generationSeed,
         double grid,
         string textureName)
@@ -69,6 +73,12 @@ internal static class TaperedTrunkGenerator
             TreeGenerationSettings.MaximumTrunkBend,
             nameof(bend),
             "trunk bend");
+        ValidateFraction(
+            baseFlare,
+            TreeGenerationSettings.MinimumTrunkBaseFlare,
+            TreeGenerationSettings.MaximumTrunkBaseFlare,
+            nameof(baseFlare),
+            "trunk base flare");
 
         if (!double.IsFinite(grid) || grid <= 0.0) {
             throw new ArgumentOutOfRangeException(
@@ -96,6 +106,19 @@ internal static class TaperedTrunkGenerator
                     MidpointRounding.AwayFromZero),
                 1,
                 trunkWidthUnits);
+        int baseFlareAddedWidthUnits =
+            CalculateBaseFlareAddedWidthUnits(
+                trunkWidthUnits,
+                baseFlare);
+        int flaredBaseWidthUnits =
+            trunkWidthUnits +
+            baseFlareAddedWidthUnits;
+        Vector3d flaredBaseCenter =
+            CreateBaseFlareCenter(
+                origin,
+                baseFlareAddedWidthUnits,
+                generationSeed,
+                grid);
         bool useOctagonalRings =
             topWidthUnits >= 3;
         int baseSegmentHeightUnits =
@@ -130,11 +153,13 @@ internal static class TaperedTrunkGenerator
                 currentBottomUnits +
                 segmentHeightUnits;
             int bottomWidthUnits =
-                InterpolateWidthUnits(
-                    trunkWidthUnits,
-                    topWidthUnits,
-                    segmentIndex,
-                    segmentCount);
+                segmentIndex == 0
+                    ? flaredBaseWidthUnits
+                    : InterpolateWidthUnits(
+                        trunkWidthUnits,
+                        topWidthUnits,
+                        segmentIndex,
+                        segmentCount);
             int segmentTopWidthUnits =
                 InterpolateWidthUnits(
                     trunkWidthUnits,
@@ -147,9 +172,13 @@ internal static class TaperedTrunkGenerator
             double topZ =
                 origin.Z +
                 (currentTopUnits * grid);
+            Vector3d bottomRingCenter =
+                segmentIndex == 0
+                    ? flaredBaseCenter
+                    : ringCenters[segmentIndex];
             Vector3d[] bottomRing =
                 CreateRing(
-                    ringCenters[segmentIndex],
+                    bottomRingCenter,
                     bottomWidthUnits,
                     bottomZ,
                     grid,
@@ -190,6 +219,50 @@ internal static class TaperedTrunkGenerator
         return new GeneratedTrunk(
             parts,
             topCenter);
+    }
+
+    private static int CalculateBaseFlareAddedWidthUnits(
+        int trunkWidthUnits,
+        double baseFlare)
+    {
+        return Math.Clamp(
+            (int)Math.Round(
+                trunkWidthUnits *
+                baseFlare,
+                MidpointRounding.AwayFromZero),
+            0,
+            trunkWidthUnits);
+    }
+
+    private static Vector3d CreateBaseFlareCenter(
+        Vector3d origin,
+        int addedWidthUnits,
+        GenerationSeed generationSeed,
+        double grid)
+    {
+        if (addedWidthUnits == 0) {
+            return origin;
+        }
+
+        DeterministicRandom random =
+            new(
+                generationSeed.Value ^
+                BaseFlareSeedSalt);
+
+        (int directionX, int directionY) =
+            SelectCardinalDirection(
+                random.NextInt32(4));
+
+        double centerOffset =
+            (addedWidthUnits * grid) /
+            2.0;
+
+        return new Vector3d(
+            origin.X +
+            (directionX * centerOffset),
+            origin.Y +
+            (directionY * centerOffset),
+            origin.Z);
     }
 
     private static Vector3d[] CreateRingCenters(

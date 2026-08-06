@@ -26,6 +26,12 @@ public partial class MainWindow : Window
     private const double DefaultTrunkTaperPercent =
         TreeGenerationSettings.DefaultTrunkTaper *
         100.0;
+    private const double DefaultTrunkLeanPercent =
+        TreeGenerationSettings.DefaultTrunkLean *
+        100.0;
+    private const double DefaultTrunkBendPercent =
+        TreeGenerationSettings.DefaultTrunkBend *
+        100.0;
     private const double DefaultCanopyWidth = 160.0;
     private const double DefaultCanopyHeight = 128.0;
     private const int DefaultCanopyLayerCount = 3;
@@ -95,6 +101,28 @@ public partial class MainWindow : Window
             value: DefaultTrunkTaperPercent);
 
         ConfigureSlider(
+            TrunkLeanSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkLean *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkLean *
+                100.0,
+            step: 5.0,
+            value: DefaultTrunkLeanPercent);
+
+        ConfigureSlider(
+            TrunkBendSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkBend *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkBend *
+                100.0,
+            step: 5.0,
+            value: DefaultTrunkBendPercent);
+
+        ConfigureSlider(
             CanopyWidthSlider,
             minimum: 128.0,
             maximum: 512.0,
@@ -145,6 +173,10 @@ public partial class MainWindow : Window
         TrunkWidthSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         TrunkTaperSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkLeanSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkBendSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         CanopyWidthSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
@@ -377,6 +409,14 @@ public partial class MainWindow : Window
         TrunkTaperValueTextBlock.Text =
             FormatPercent(
                 TrunkTaperSlider.Value);
+
+        TrunkLeanValueTextBlock.Text =
+            FormatPercent(
+                TrunkLeanSlider.Value);
+
+        TrunkBendValueTextBlock.Text =
+            FormatPercent(
+                TrunkBendSlider.Value);
 
         CanopyWidthValueTextBlock.Text =
             FormatUnits(
@@ -620,6 +660,14 @@ public partial class MainWindow : Window
                 SelectRandomSliderTick(
                     TrunkTaperSlider,
                     random);
+            TrunkLeanSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkLeanSlider,
+                    random);
+            TrunkBendSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkBendSlider,
+                    random);
 
             UpdateDimensionValueLabels();
         }
@@ -657,6 +705,10 @@ public partial class MainWindow : Window
                 DefaultTrunkWidth;
             TrunkTaperSlider.Value =
                 DefaultTrunkTaperPercent;
+            TrunkLeanSlider.Value =
+                DefaultTrunkLeanPercent;
+            TrunkBendSlider.Value =
+                DefaultTrunkBendPercent;
             CanopyWidthSlider.Value =
                 DefaultCanopyWidth;
             CanopyHeightSlider.Value =
@@ -833,7 +885,11 @@ public partial class MainWindow : Window
             trunkSegmentCount.ToString(
                 CultureInfo.InvariantCulture),
             FormatControlValue(
-                TrunkTaperSlider.Value));
+                TrunkTaperSlider.Value),
+            FormatControlValue(
+                TrunkLeanSlider.Value),
+            FormatControlValue(
+                TrunkBendSlider.Value));
     }
 
     private void ClearResult(

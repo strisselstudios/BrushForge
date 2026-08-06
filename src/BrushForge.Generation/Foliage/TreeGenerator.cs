@@ -67,16 +67,21 @@ public static class TreeGenerator
             overallHeightUnits,
             canopyBottomUnits + 1);
 
-        List<GeneratedTreeBrush> parts =
+        GeneratedTrunk trunk =
             TaperedTrunkGenerator.Generate(
                 origin,
                 trunkWidthUnits,
                 trunkTopUnits,
                 settings.TrunkSegmentCount,
                 settings.TrunkTaper,
+                settings.TrunkLean,
+                settings.TrunkBend,
+                settings.GenerationSeed,
                 grid,
-                settings.TrunkTextureName)
-                .ToList();
+                settings.TrunkTextureName);
+
+        List<GeneratedTreeBrush> parts =
+            trunk.Parts.ToList();
 
         DeterministicRandom random =
             new(settings.GenerationSeed);
@@ -153,8 +158,10 @@ public static class TreeGenerator
                     maximumYOffsetUnits);
 
             Vector3d layerCenter = new(
-                origin.X + (xOffsetUnits * grid),
-                origin.Y + (yOffsetUnits * grid),
+                trunk.TopCenter.X +
+                (xOffsetUnits * grid),
+                trunk.TopCenter.Y +
+                (yOffsetUnits * grid),
                 origin.Z);
 
             double layerMinimumZ =

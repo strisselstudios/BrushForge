@@ -60,6 +60,28 @@ public static class TreeGenerationInputParser
                     100.0,
                 displayName: "Trunk taper");
 
+        double trunkLeanPercent =
+            ParseBoundedDouble(
+                input.TrunkLeanPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkLean *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkLean *
+                    100.0,
+                displayName: "Trunk lean");
+
+        double trunkBendPercent =
+            ParseBoundedDouble(
+                input.TrunkBendPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkBend *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkBend *
+                    100.0,
+                displayName: "Trunk bend");
+
         double gridUnits =
             ParsePositiveDouble(
                 input.GridSpacing,
@@ -77,7 +99,9 @@ public static class TreeGenerationInputParser
             input.TrunkTextureName,
             input.CanopyTextureName,
             trunkSegmentCount,
-            trunkTaperPercent / 100.0);
+            trunkTaperPercent / 100.0,
+            trunkLeanPercent / 100.0,
+            trunkBendPercent / 100.0);
     }
 
     private static GenerationSeed ParseGenerationSeed(

@@ -258,6 +258,34 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk lean" />
+                        <TextBlock x:Name="TrunkLeanValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkLeanSlider"
+                            ToolTip="Horizontal displacement of the trunk top as a percentage of trunk height. The seed selects the direction." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk bend" />
+                        <TextBlock x:Name="TrunkBendValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkBendSlider"
+                            ToolTip="Sideways bow through the middle rings as a percentage of trunk height. The top still follows Trunk Lean." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <TextBlock Text="Canopy width" />
                         <TextBlock x:Name="CanopyWidthValueTextBlock"
                                    Grid.Column="1"

@@ -235,6 +235,10 @@
                     </Grid>
                     <Slider x:Name="TrunkWidthSlider" />
 
+                    <TextBlock Text="Trunk cross-section" />
+                    <ComboBox x:Name="TrunkCrossSectionComboBox"
+                              ToolTip="Selects four or eight vertical trunk faces independently of grid spacing." />
+
                     <TextBlock Text="Trunk segments" />
                     <ComboBox x:Name="TrunkSegmentCountComboBox"
                               ToolTip="Number of contiguous convex brushes used for the trunk. Available counts adapt to the current trunk height." />

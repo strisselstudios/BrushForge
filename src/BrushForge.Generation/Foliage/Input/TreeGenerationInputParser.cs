@@ -93,6 +93,10 @@ public static class TreeGenerationInputParser
                     100.0,
                 displayName: "Trunk base flare");
 
+        TrunkCrossSectionProfile trunkCrossSection =
+            ParseTrunkCrossSection(
+                input.TrunkCrossSection);
+
         double gridUnits =
             ParsePositiveDouble(
                 input.GridSpacing,
@@ -113,7 +117,25 @@ public static class TreeGenerationInputParser
             trunkTaperPercent / 100.0,
             trunkLeanPercent / 100.0,
             trunkBendPercent / 100.0,
-            trunkBaseFlarePercent / 100.0);
+            trunkBaseFlarePercent / 100.0,
+            trunkCrossSection);
+    }
+
+    private static TrunkCrossSectionProfile ParseTrunkCrossSection(
+        string text)
+    {
+        if (
+            !Enum.TryParse(
+                text,
+                ignoreCase: true,
+                out TrunkCrossSectionProfile profile) ||
+            !Enum.IsDefined(profile)
+        ) {
+            throw new FormatException(
+                "Trunk cross-section must be Square or Octagonal.");
+        }
+
+        return profile;
     }
 
     private static GenerationSeed ParseGenerationSeed(

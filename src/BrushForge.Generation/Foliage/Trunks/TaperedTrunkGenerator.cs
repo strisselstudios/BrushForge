@@ -26,6 +26,7 @@ internal static class TaperedTrunkGenerator
         double lean,
         double bend,
         double baseFlare,
+        TrunkCrossSectionProfile trunkCrossSection,
         GenerationSeed generationSeed,
         double grid,
         string textureName)
@@ -80,6 +81,13 @@ internal static class TaperedTrunkGenerator
             nameof(baseFlare),
             "trunk base flare");
 
+        if (!Enum.IsDefined(trunkCrossSection)) {
+            throw new ArgumentOutOfRangeException(
+                nameof(trunkCrossSection),
+                trunkCrossSection,
+                "The trunk cross-section profile is not supported.");
+        }
+
         if (!double.IsFinite(grid) || grid <= 0.0) {
             throw new ArgumentOutOfRangeException(
                 nameof(grid),
@@ -119,8 +127,6 @@ internal static class TaperedTrunkGenerator
                 baseFlareAddedWidthUnits,
                 generationSeed,
                 grid);
-        bool useOctagonalRings =
-            topWidthUnits >= 3;
         int baseSegmentHeightUnits =
             trunkTopUnits / segmentCount;
         int remainingHeightUnits =
@@ -182,14 +188,14 @@ internal static class TaperedTrunkGenerator
                     bottomWidthUnits,
                     bottomZ,
                     grid,
-                    useOctagonalRings);
+                    trunkCrossSection);
             Vector3d[] topRing =
                 CreateRing(
                     ringCenters[segmentIndex + 1],
                     segmentTopWidthUnits,
                     topZ,
                     grid,
-                    useOctagonalRings);
+                    trunkCrossSection);
             ConvexBrush brush =
                 VerticalConvexFrustumBrushFactory.Create(
                     bottomRing,
@@ -414,12 +420,17 @@ internal static class TaperedTrunkGenerator
         int widthUnits,
         double z,
         double grid,
-        bool useOctagonalRing)
+        TrunkCrossSectionProfile trunkCrossSection)
     {
         // Widths can change from an even to an odd number of grid units.
-        // Half-grid coordinates keep every ring centered on its path point.
+        // Square rings use half-grid coordinates. Octagonal rings use
+        // quarter-grid corner cuts so their side count is independent of
+        // the selected grid spacing and remains valid at one grid unit.
+        double width =
+            widthUnits *
+            grid;
         double halfWidth =
-            (widthUnits * grid) /
+            width /
             2.0;
         double minimumX =
             center.X -
@@ -434,7 +445,7 @@ internal static class TaperedTrunkGenerator
             center.Y +
             halfWidth;
 
-        if (!useOctagonalRing) {
+        if (trunkCrossSection == TrunkCrossSectionProfile.Square) {
             return
             [
                 new Vector3d(
@@ -456,7 +467,17 @@ internal static class TaperedTrunkGenerator
             ];
         }
 
-        double inset = grid;
+        if (trunkCrossSection != TrunkCrossSectionProfile.Octagonal) {
+            throw new ArgumentOutOfRangeException(
+                nameof(trunkCrossSection),
+                trunkCrossSection,
+                "The trunk cross-section profile is not supported.");
+        }
+
+        double inset =
+            width /
+            4.0;
+
         return
         [
             new Vector3d(

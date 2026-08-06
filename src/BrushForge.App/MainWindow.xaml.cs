@@ -21,6 +21,8 @@ public partial class MainWindow : Window
     private const string DefaultGenerationSeed = "1";
     private const double DefaultOverallHeight = 256.0;
     private const double DefaultTrunkWidth = 32.0;
+    private const TrunkCrossSectionProfile DefaultTrunkCrossSection =
+        TreeGenerationSettings.DefaultTrunkCrossSection;
     private const int DefaultTrunkSegmentCount =
         TreeGenerationSettings.DefaultTrunkSegmentCount;
     private const double DefaultTrunkTaperPercent =
@@ -164,6 +166,13 @@ public partial class MainWindow : Window
         CanopyLayerCountComboBox.SelectedItem =
             DefaultCanopyLayerCount;
 
+        TrunkCrossSectionComboBox.Items.Add(
+            TrunkCrossSectionProfile.Square);
+        TrunkCrossSectionComboBox.Items.Add(
+            TrunkCrossSectionProfile.Octagonal);
+        TrunkCrossSectionComboBox.SelectedItem =
+            DefaultTrunkCrossSection;
+
         foreach (
             double gridSpacing in
             new[]
@@ -199,6 +208,8 @@ public partial class MainWindow : Window
         CanopyHeightSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
 
+        TrunkCrossSectionComboBox.SelectionChanged +=
+            OnGenerationSelectionChanged;
         TrunkSegmentCountComboBox.SelectionChanged +=
             OnGenerationSelectionChanged;
         CanopyLayerCountComboBox.SelectionChanged +=
@@ -692,6 +703,11 @@ public partial class MainWindow : Window
                 SelectRandomSliderTick(
                     TrunkBaseFlareSlider,
                     random);
+            TrunkCrossSectionComboBox.SelectedItem =
+                SelectRandomComboBoxItem<TrunkCrossSectionProfile>(
+                    TrunkCrossSectionComboBox,
+                    random,
+                    "Trunk cross-section");
 
             UpdateDimensionValueLabels();
         }
@@ -727,6 +743,8 @@ public partial class MainWindow : Window
                 DefaultOverallHeight;
             TrunkWidthSlider.Value =
                 DefaultTrunkWidth;
+            TrunkCrossSectionComboBox.SelectedItem =
+                DefaultTrunkCrossSection;
             TrunkTaperSlider.Value =
                 DefaultTrunkTaperPercent;
             TrunkLeanSlider.Value =
@@ -877,6 +895,11 @@ public partial class MainWindow : Window
 
     private TreeGenerationInput ReadInput()
     {
+        TrunkCrossSectionProfile trunkCrossSection =
+            ReadSelectedValue<TrunkCrossSectionProfile>(
+                TrunkCrossSectionComboBox,
+                "Trunk cross-section");
+
         int trunkSegmentCount =
             ReadSelectedValue<int>(
                 TrunkSegmentCountComboBox,
@@ -917,7 +940,8 @@ public partial class MainWindow : Window
             FormatControlValue(
                 TrunkBendSlider.Value),
             FormatControlValue(
-                TrunkBaseFlareSlider.Value));
+                TrunkBaseFlareSlider.Value),
+            trunkCrossSection.ToString());
     }
 
     private void ClearResult(

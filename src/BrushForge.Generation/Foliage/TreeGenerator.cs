@@ -77,6 +77,7 @@ public static class TreeGenerator
                 settings.TrunkLean,
                 settings.TrunkBend,
                 settings.TrunkBaseFlare,
+                settings.TrunkCrossSection,
                 settings.GenerationSeed,
                 grid,
                 settings.TrunkTextureName);

@@ -198,7 +198,12 @@ public sealed class TreeGeneratorTests
         GridSpacing trunkHorizontalSpacing =
             new(
                 settings.GridSpacing.Units /
-                2.0);
+                (
+                    settings.TrunkCrossSection ==
+                        TrunkCrossSectionProfile.Octagonal
+                        ? 4.0
+                        : 2.0
+                ));
 
         foreach (GeneratedTreeBrush part in result.Parts) {
             BrushValidationResult validation =
@@ -402,7 +407,10 @@ public sealed class TreeGeneratorTests
         int canopyLayerCount = 3,
         ulong generationSeed = 1UL,
         string trunkTextureName = "WOOD",
-        string canopyTextureName = "LEAF")
+        string canopyTextureName = "LEAF",
+        GridSpacing? gridSpacing = null,
+        TrunkCrossSectionProfile trunkCrossSection =
+            TreeGenerationSettings.DefaultTrunkCrossSection)
     {
         return new TreeGenerationSettings(
             Vector3d.Zero,
@@ -413,8 +421,9 @@ public sealed class TreeGeneratorTests
             canopyLayerCount,
             new GenerationSeed(
                 generationSeed),
-            GridSpacing.Eight,
+            gridSpacing ?? GridSpacing.Eight,
             trunkTextureName,
-            canopyTextureName);
+            canopyTextureName,
+            trunkCrossSection: trunkCrossSection);
     }
 }

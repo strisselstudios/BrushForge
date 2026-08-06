@@ -37,6 +37,12 @@ public partial class MainWindow : Window
     private const double DefaultTrunkBaseFlarePercent =
         TreeGenerationSettings.DefaultTrunkBaseFlare *
         100.0;
+    private const double DefaultTrunkIrregularityPercent =
+        TreeGenerationSettings.DefaultTrunkIrregularity *
+        100.0;
+    private const double DefaultTrunkTwistPercent =
+        TreeGenerationSettings.DefaultTrunkTwist *
+        100.0;
     private const double DefaultCanopyWidth = 160.0;
     private const double DefaultCanopyHeight = 128.0;
     private const int DefaultCanopyLayerCount = 3;
@@ -139,6 +145,28 @@ public partial class MainWindow : Window
             value: DefaultTrunkBaseFlarePercent);
 
         ConfigureSlider(
+            TrunkIrregularitySlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkIrregularity *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkIrregularity *
+                100.0,
+            step: 5.0,
+            value: DefaultTrunkIrregularityPercent);
+
+        ConfigureSlider(
+            TrunkTwistSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkTwist *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkTwist *
+                100.0,
+            step: 25.0,
+            value: DefaultTrunkTwistPercent);
+
+        ConfigureSlider(
             CanopyWidthSlider,
             minimum: 128.0,
             maximum: 512.0,
@@ -202,6 +230,10 @@ public partial class MainWindow : Window
         TrunkBendSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         TrunkBaseFlareSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkIrregularitySlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkTwistSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         CanopyWidthSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
@@ -448,6 +480,14 @@ public partial class MainWindow : Window
         TrunkBaseFlareValueTextBlock.Text =
             FormatPercent(
                 TrunkBaseFlareSlider.Value);
+
+        TrunkIrregularityValueTextBlock.Text =
+            FormatPercent(
+                TrunkIrregularitySlider.Value);
+
+        TrunkTwistValueTextBlock.Text =
+            FormatPercent(
+                TrunkTwistSlider.Value);
 
         CanopyWidthValueTextBlock.Text =
             FormatUnits(
@@ -703,6 +743,14 @@ public partial class MainWindow : Window
                 SelectRandomSliderTick(
                     TrunkBaseFlareSlider,
                     random);
+            TrunkIrregularitySlider.Value =
+                SelectRandomSliderTick(
+                    TrunkIrregularitySlider,
+                    random);
+            TrunkTwistSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkTwistSlider,
+                    random);
             TrunkCrossSectionComboBox.SelectedItem =
                 SelectRandomComboBoxItem<TrunkCrossSectionProfile>(
                     TrunkCrossSectionComboBox,
@@ -753,6 +801,10 @@ public partial class MainWindow : Window
                 DefaultTrunkBendPercent;
             TrunkBaseFlareSlider.Value =
                 DefaultTrunkBaseFlarePercent;
+            TrunkIrregularitySlider.Value =
+                DefaultTrunkIrregularityPercent;
+            TrunkTwistSlider.Value =
+                DefaultTrunkTwistPercent;
             CanopyWidthSlider.Value =
                 DefaultCanopyWidth;
             CanopyHeightSlider.Value =
@@ -941,7 +993,11 @@ public partial class MainWindow : Window
                 TrunkBendSlider.Value),
             FormatControlValue(
                 TrunkBaseFlareSlider.Value),
-            trunkCrossSection.ToString());
+            trunkCrossSection.ToString(),
+            FormatControlValue(
+                TrunkIrregularitySlider.Value),
+            FormatControlValue(
+                TrunkTwistSlider.Value));
     }
 
     private void ClearResult(

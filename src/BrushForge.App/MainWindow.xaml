@@ -304,6 +304,34 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk irregularity" />
+                        <TextBlock x:Name="TrunkIrregularityValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkIrregularitySlider"
+                            ToolTip="Adds seed-driven quarter-grid offsets to intermediate trunk rings while preserving the base and top positions." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk twist" />
+                        <TextBlock x:Name="TrunkTwistValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkTwistSlider"
+                            ToolTip="Rotates the irregularity path around the trunk from zero to one full turn. It does not change the selected cross-section face count." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <TextBlock Text="Canopy width" />
                         <TextBlock x:Name="CanopyWidthValueTextBlock"
                                    Grid.Column="1"

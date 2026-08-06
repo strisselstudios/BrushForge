@@ -78,6 +78,8 @@ public static class TreeGenerator
                 settings.TrunkBend,
                 settings.TrunkBaseFlare,
                 settings.TrunkCrossSection,
+                settings.TrunkIrregularity,
+                settings.TrunkTwist,
                 settings.GenerationSeed,
                 grid,
                 settings.TrunkTextureName);

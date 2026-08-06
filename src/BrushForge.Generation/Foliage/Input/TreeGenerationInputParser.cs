@@ -97,6 +97,28 @@ public static class TreeGenerationInputParser
             ParseTrunkCrossSection(
                 input.TrunkCrossSection);
 
+        double trunkIrregularityPercent =
+            ParseBoundedDouble(
+                input.TrunkIrregularityPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkIrregularity *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkIrregularity *
+                    100.0,
+                displayName: "Trunk irregularity");
+
+        double trunkTwistPercent =
+            ParseBoundedDouble(
+                input.TrunkTwistPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkTwist *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkTwist *
+                    100.0,
+                displayName: "Trunk twist");
+
         double gridUnits =
             ParsePositiveDouble(
                 input.GridSpacing,
@@ -118,7 +140,9 @@ public static class TreeGenerationInputParser
             trunkLeanPercent / 100.0,
             trunkBendPercent / 100.0,
             trunkBaseFlarePercent / 100.0,
-            trunkCrossSection);
+            trunkCrossSection,
+            trunkIrregularityPercent / 100.0,
+            trunkTwistPercent / 100.0);
     }
 
     private static TrunkCrossSectionProfile ParseTrunkCrossSection(

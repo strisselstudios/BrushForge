@@ -17,6 +17,9 @@ internal static class TaperedTrunkGenerator
     private const ulong BaseFlareSeedSalt =
         0x94D049BB133111EBUL;
 
+    private const ulong IrregularitySeedSalt =
+        0x9E3779B97F4A7C15UL;
+
     public static GeneratedTrunk Generate(
         Vector3d origin,
         int trunkWidthUnits,
@@ -27,6 +30,8 @@ internal static class TaperedTrunkGenerator
         double bend,
         double baseFlare,
         TrunkCrossSectionProfile trunkCrossSection,
+        double irregularity,
+        double twist,
         GenerationSeed generationSeed,
         double grid,
         string textureName)
@@ -80,6 +85,18 @@ internal static class TaperedTrunkGenerator
             TreeGenerationSettings.MaximumTrunkBaseFlare,
             nameof(baseFlare),
             "trunk base flare");
+        ValidateFraction(
+            irregularity,
+            TreeGenerationSettings.MinimumTrunkIrregularity,
+            TreeGenerationSettings.MaximumTrunkIrregularity,
+            nameof(irregularity),
+            "trunk irregularity");
+        ValidateFraction(
+            twist,
+            TreeGenerationSettings.MinimumTrunkTwist,
+            TreeGenerationSettings.MaximumTrunkTwist,
+            nameof(twist),
+            "trunk twist");
 
         if (!Enum.IsDefined(trunkCrossSection)) {
             throw new ArgumentOutOfRangeException(
@@ -134,10 +151,13 @@ internal static class TaperedTrunkGenerator
         Vector3d[] ringCenters =
             CreateRingCenters(
                 origin,
+                trunkWidthUnits,
                 trunkTopUnits,
                 segmentCount,
                 lean,
                 bend,
+                irregularity,
+                twist,
                 generationSeed,
                 grid);
         int currentBottomUnits = 0;
@@ -273,10 +293,13 @@ internal static class TaperedTrunkGenerator
 
     private static Vector3d[] CreateRingCenters(
         Vector3d origin,
+        int trunkWidthUnits,
         int trunkTopUnits,
         int segmentCount,
         double lean,
         double bend,
+        double irregularity,
+        double twist,
         GenerationSeed generationSeed,
         double grid)
     {
@@ -299,6 +322,18 @@ internal static class TaperedTrunkGenerator
         int bendY =
             leanX *
             bendSign;
+
+        DeterministicRandom irregularityRandom =
+            new(
+                generationSeed.Value ^
+                IrregularitySeedSalt);
+        double startingIrregularityAngle =
+            irregularityRandom.NextInt32(8) *
+            (Math.PI / 4.0);
+        int twistDirection =
+            irregularityRandom.NextBoolean()
+                ? 1
+                : -1;
 
         int leanOffsetUnits =
             CalculateOffsetUnits(
@@ -337,16 +372,105 @@ internal static class TaperedTrunkGenerator
             int yOffsetUnits =
                 (leanY * appliedLeanUnits) +
                 (bendY * appliedBendUnits);
+            Vector3d irregularityOffset =
+                CreateIrregularityOffset(
+                    trunkWidthUnits,
+                    levelIndex,
+                    segmentCount,
+                    progress,
+                    irregularity,
+                    twist,
+                    startingIrregularityAngle,
+                    twistDirection,
+                    irregularityRandom,
+                    grid);
 
             centers[levelIndex] = new Vector3d(
                 origin.X +
-                (xOffsetUnits * grid),
+                (xOffsetUnits * grid) +
+                irregularityOffset.X,
                 origin.Y +
-                (yOffsetUnits * grid),
+                (yOffsetUnits * grid) +
+                irregularityOffset.Y,
                 origin.Z);
         }
 
         return centers;
+    }
+
+    private static Vector3d CreateIrregularityOffset(
+        int trunkWidthUnits,
+        int levelIndex,
+        int segmentCount,
+        double progress,
+        double irregularity,
+        double twist,
+        double startingAngle,
+        int twistDirection,
+        DeterministicRandom random,
+        double grid)
+    {
+        if (
+            irregularity <= 0.0 ||
+            levelIndex == 0 ||
+            levelIndex == segmentCount
+        ) {
+            return Vector3d.Zero;
+        }
+
+        double envelope =
+            Math.Sin(
+                Math.PI *
+                progress);
+        double amplitudeScale =
+            random.NextDouble(
+                0.65,
+                1.0);
+        double phaseJitter =
+            random.NextDouble(
+                -Math.PI / 12.0,
+                Math.PI / 12.0);
+        double angle =
+            startingAngle +
+            (
+                twistDirection *
+                Math.Tau *
+                twist *
+                progress
+            ) +
+            phaseJitter;
+        double radius =
+            trunkWidthUnits *
+            grid *
+            irregularity *
+            envelope *
+            amplitudeScale;
+
+        return new Vector3d(
+            SnapToQuarterGrid(
+                Math.Cos(angle) *
+                radius,
+                grid),
+            SnapToQuarterGrid(
+                Math.Sin(angle) *
+                radius,
+                grid),
+            0.0);
+    }
+
+    private static double SnapToQuarterGrid(
+        double value,
+        double grid)
+    {
+        double increment =
+            grid /
+            4.0;
+
+        return Math.Round(
+            value /
+            increment,
+            MidpointRounding.AwayFromZero) *
+            increment;
     }
 
     private static (int X, int Y) SelectCardinalDirection(

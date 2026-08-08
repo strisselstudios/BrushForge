@@ -43,6 +43,9 @@ public partial class MainWindow : Window
     private const double DefaultTrunkTwistPercent =
         TreeGenerationSettings.DefaultTrunkTwist *
         100.0;
+    private const double DefaultDetailPercent =
+        TreeGenerationSettings.DefaultDetail *
+        100.0;
     private const double DefaultCanopyWidth = 160.0;
     private const double DefaultCanopyHeight = 128.0;
     private const int DefaultCanopyLayerCount = 3;
@@ -167,6 +170,17 @@ public partial class MainWindow : Window
             value: DefaultTrunkTwistPercent);
 
         ConfigureSlider(
+            DetailSlider,
+            minimum:
+                TreeGenerationSettings.MinimumDetail *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumDetail *
+                100.0,
+            step: 1.0,
+            value: DefaultDetailPercent);
+
+        ConfigureSlider(
             CanopyWidthSlider,
             minimum: 128.0,
             maximum: 512.0,
@@ -234,6 +248,8 @@ public partial class MainWindow : Window
         TrunkIrregularitySlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         TrunkTwistSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        DetailSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         CanopyWidthSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
@@ -488,6 +504,10 @@ public partial class MainWindow : Window
         TrunkTwistValueTextBlock.Text =
             FormatPercent(
                 TrunkTwistSlider.Value);
+
+        DetailValueTextBlock.Text =
+            FormatPercent(
+                DetailSlider.Value);
 
         CanopyWidthValueTextBlock.Text =
             FormatUnits(
@@ -805,6 +825,8 @@ public partial class MainWindow : Window
                 DefaultTrunkIrregularityPercent;
             TrunkTwistSlider.Value =
                 DefaultTrunkTwistPercent;
+            DetailSlider.Value =
+                DefaultDetailPercent;
             CanopyWidthSlider.Value =
                 DefaultCanopyWidth;
             CanopyHeightSlider.Value =
@@ -997,7 +1019,9 @@ public partial class MainWindow : Window
             FormatControlValue(
                 TrunkIrregularitySlider.Value),
             FormatControlValue(
-                TrunkTwistSlider.Value));
+                TrunkTwistSlider.Value),
+            FormatControlValue(
+                DetailSlider.Value));
     }
 
     private void ClearResult(

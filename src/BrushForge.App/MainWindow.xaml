@@ -332,6 +332,20 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        <TextBlock Text="Detail" />
+                        <TextBlock x:Name="DetailValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="100%" />
+                    </Grid>
+                    <Slider x:Name="DetailSlider"
+                            ToolTip="Controls the amount of generated tree geometry while preserving the selected tree seed and identity." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <TextBlock Text="Canopy width" />
                         <TextBlock x:Name="CanopyWidthValueTextBlock"
                                    Grid.Column="1"

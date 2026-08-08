@@ -21,6 +21,49 @@ public sealed class TreeGenerationInputParserTests
         Assert.Equal(8.0, settings.GridSpacing.Units);
         Assert.Equal("WOOD", settings.TrunkTextureName);
         Assert.Equal("LEAF", settings.CanopyTextureName);
+        Assert.Equal(
+            TreeGenerationSettings.DefaultDetail,
+            settings.Detail);
+    }
+
+    [Theory]
+    [InlineData("0", 0.0)]
+    [InlineData("50", 0.5)]
+    [InlineData("100", 1.0)]
+    public void ParseAcceptsSupportedDetailPercent(
+        string detailPercent,
+        double expectedDetail)
+    {
+        TreeGenerationInput input =
+            CreateInput() with
+            {
+                DetailPercent = detailPercent
+            };
+
+        TreeGenerationSettings settings =
+            TreeGenerationInputParser.Parse(
+                input);
+
+        Assert.Equal(expectedDetail, settings.Detail);
+    }
+
+    [Theory]
+    [InlineData("-1")]
+    [InlineData("101")]
+    [InlineData("not-a-number")]
+    public void ParseRejectsInvalidDetailPercent(
+        string detailPercent)
+    {
+        TreeGenerationInput input =
+            CreateInput() with
+            {
+                DetailPercent = detailPercent
+            };
+
+        Assert.Throws<FormatException>(
+            () =>
+                TreeGenerationInputParser.Parse(
+                    input));
     }
 
     [Fact]

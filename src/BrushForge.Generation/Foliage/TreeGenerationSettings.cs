@@ -37,6 +37,9 @@ public sealed record TreeGenerationSettings
     public const double MinimumTrunkTwist = 0.0;
     public const double MaximumTrunkTwist = 1.0;
     public const double DefaultTrunkTwist = 0.0;
+    public const double MinimumDetail = 0.0;
+    public const double MaximumDetail = 1.0;
+    public const double DefaultDetail = 1.0;
     public const int MaximumGridUnitCount = 1_000_000;
     public const double MaximumDimension = 131_072.0;
 
@@ -59,7 +62,8 @@ public sealed record TreeGenerationSettings
         TrunkCrossSectionProfile trunkCrossSection =
             DefaultTrunkCrossSection,
         double trunkIrregularity = DefaultTrunkIrregularity,
-        double trunkTwist = DefaultTrunkTwist)
+        double trunkTwist = DefaultTrunkTwist,
+        double detail = DefaultDetail)
     {
         if (!origin.IsFinite) {
             throw new ArgumentOutOfRangeException(
@@ -159,6 +163,13 @@ public sealed record TreeGenerationSettings
             nameof(trunkTwist),
             "Trunk twist");
 
+        ValidateTrunkDeformation(
+            detail,
+            MinimumDetail,
+            MaximumDetail,
+            nameof(detail),
+            "Detail");
+
         if (canopyHeight >= overallHeight) {
             throw new ArgumentOutOfRangeException(
                 nameof(canopyHeight),
@@ -250,6 +261,7 @@ public sealed record TreeGenerationSettings
         TrunkCrossSection = trunkCrossSection;
         TrunkIrregularity = trunkIrregularity;
         TrunkTwist = trunkTwist;
+        Detail = detail;
     }
 
     public Vector3d Origin { get; }
@@ -287,6 +299,8 @@ public sealed record TreeGenerationSettings
     public double TrunkIrregularity { get; }
 
     public double TrunkTwist { get; }
+
+    public double Detail { get; }
 
     public static TreeGenerationSettings CreateDefault(
         BrushForgeProjectSettings projectSettings)
@@ -330,7 +344,8 @@ public sealed record TreeGenerationSettings
             TrunkBaseFlare,
             TrunkCrossSection,
             TrunkIrregularity,
-            TrunkTwist);
+            TrunkTwist,
+            Detail);
     }
 
     public TreeGenerationSettings WithDimensions(
@@ -358,7 +373,8 @@ public sealed record TreeGenerationSettings
             TrunkBaseFlare,
             TrunkCrossSection,
             TrunkIrregularity,
-            TrunkTwist);
+            TrunkTwist,
+            Detail);
     }
 
     public TreeGenerationSettings WithGenerationSeed(
@@ -382,7 +398,8 @@ public sealed record TreeGenerationSettings
             TrunkBaseFlare,
             TrunkCrossSection,
             TrunkIrregularity,
-            TrunkTwist);
+            TrunkTwist,
+            Detail);
     }
 
     public TreeGenerationSettings WithTextures(
@@ -407,7 +424,8 @@ public sealed record TreeGenerationSettings
             TrunkBaseFlare,
             TrunkCrossSection,
             TrunkIrregularity,
-            TrunkTwist);
+            TrunkTwist,
+            Detail);
     }
 
     public TreeGenerationSettings WithTrunkShape(
@@ -432,7 +450,8 @@ public sealed record TreeGenerationSettings
             TrunkBaseFlare,
             TrunkCrossSection,
             TrunkIrregularity,
-            TrunkTwist);
+            TrunkTwist,
+            Detail);
     }
 
     public TreeGenerationSettings WithTrunkDeformation(
@@ -457,7 +476,8 @@ public sealed record TreeGenerationSettings
             TrunkBaseFlare,
             TrunkCrossSection,
             TrunkIrregularity,
-            TrunkTwist);
+            TrunkTwist,
+            Detail);
     }
 
     public TreeGenerationSettings WithTrunkBaseFlare(
@@ -481,7 +501,8 @@ public sealed record TreeGenerationSettings
             trunkBaseFlare,
             TrunkCrossSection,
             TrunkIrregularity,
-            TrunkTwist);
+            TrunkTwist,
+            Detail);
     }
 
     public TreeGenerationSettings WithTrunkCrossSection(
@@ -505,7 +526,8 @@ public sealed record TreeGenerationSettings
             TrunkBaseFlare,
             trunkCrossSection,
             TrunkIrregularity,
-            TrunkTwist);
+            TrunkTwist,
+            Detail);
     }
 
     public TreeGenerationSettings WithTrunkIrregularity(
@@ -530,7 +552,33 @@ public sealed record TreeGenerationSettings
             TrunkBaseFlare,
             TrunkCrossSection,
             trunkIrregularity,
-            trunkTwist);
+            trunkTwist,
+            Detail);
+    }
+
+    public TreeGenerationSettings WithDetail(
+        double detail)
+    {
+        return new TreeGenerationSettings(
+            Origin,
+            OverallHeight,
+            TrunkWidth,
+            CanopyWidth,
+            CanopyHeight,
+            CanopyLayerCount,
+            GenerationSeed,
+            GridSpacing,
+            TrunkTextureName,
+            CanopyTextureName,
+            TrunkSegmentCount,
+            TrunkTaper,
+            TrunkLean,
+            TrunkBend,
+            TrunkBaseFlare,
+            TrunkCrossSection,
+            TrunkIrregularity,
+            TrunkTwist,
+            detail);
     }
 
     private static int CalculateTrunkTopUnitCount(

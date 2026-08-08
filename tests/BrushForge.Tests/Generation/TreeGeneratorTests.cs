@@ -373,6 +373,90 @@ public sealed class TreeGeneratorTests
         }
     }
 
+    [Theory]
+    [InlineData(0.0, 6)]
+    [InlineData(0.49, 6)]
+    [InlineData(0.50, 10)]
+    [InlineData(1.0, 10)]
+    public void GenerateUsesDetailToResolveOctagonalTrunkComplexity(
+        double detail,
+        int expectedFaceCount)
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Octagonal,
+                    detail: detail));
+
+        GeneratedTreeBrush[] trunkParts =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Trunk)
+                .ToArray();
+
+        Assert.All(
+            trunkParts,
+            part =>
+                Assert.Equal(
+                    expectedFaceCount,
+                    part.Brush.FaceCount));
+    }
+
+    [Fact]
+    public void GenerateDoesNotIncreaseExplicitSquareTrunkComplexity()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    detail: 1.0));
+
+        Assert.All(
+            result.Parts.Where(
+                part =>
+                    part.Role == TreeBrushRole.Trunk),
+            part =>
+                Assert.Equal(
+                    6,
+                    part.Brush.FaceCount));
+    }
+
+    [Fact]
+    public void ChangingDetailPreservesTreeAndPartBounds()
+    {
+        TreeGenerationResult minimum =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 741UL,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Octagonal,
+                    detail: 0.0));
+
+        TreeGenerationResult maximum =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 741UL,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Octagonal,
+                    detail: 1.0));
+
+        Assert.Equal(
+            maximum.Bounds,
+            minimum.Bounds);
+        Assert.Equal(
+            maximum.Parts.Count,
+            minimum.Parts.Count);
+
+        for (int index = 0; index < maximum.Parts.Count; index++) {
+            Assert.Equal(
+                maximum.Parts[index].Bounds,
+                minimum.Parts[index].Bounds);
+        }
+    }
+
     [Fact]
     public void GenerateStoresGeneratorMetadataInWorldspawn()
     {
@@ -410,7 +494,8 @@ public sealed class TreeGeneratorTests
         string canopyTextureName = "LEAF",
         GridSpacing? gridSpacing = null,
         TrunkCrossSectionProfile trunkCrossSection =
-            TreeGenerationSettings.DefaultTrunkCrossSection)
+            TreeGenerationSettings.DefaultTrunkCrossSection,
+        double detail = TreeGenerationSettings.DefaultDetail)
     {
         return new TreeGenerationSettings(
             Vector3d.Zero,
@@ -424,6 +509,7 @@ public sealed class TreeGeneratorTests
             gridSpacing ?? GridSpacing.Eight,
             trunkTextureName,
             canopyTextureName,
-            trunkCrossSection: trunkCrossSection);
+            trunkCrossSection: trunkCrossSection,
+            detail: detail);
     }
 }

@@ -70,6 +70,9 @@ public static class TreeGenerator
         TrunkCrossSectionProfile trunkCrossSection =
             TreeDetailRealizationPolicy.ResolveTrunkCrossSection(
                 settings);
+        double trunkIrregularity =
+            TreeDetailRealizationPolicy.ResolveTrunkIrregularity(
+                settings);
 
         GeneratedTrunk trunk =
             TaperedTrunkGenerator.Generate(
@@ -82,7 +85,7 @@ public static class TreeGenerator
                 settings.TrunkBend,
                 settings.TrunkBaseFlare,
                 trunkCrossSection,
-                settings.TrunkIrregularity,
+                trunkIrregularity,
                 settings.TrunkTwist,
                 settings.GenerationSeed,
                 grid,

@@ -23,4 +23,12 @@ internal static class TreeDetailRealizationPolicy
 
         return settings.TrunkCrossSection;
     }
+
+    public static double ResolveTrunkIrregularity(
+        TreeGenerationSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        return settings.TrunkIrregularity * settings.Detail;
+    }
 }

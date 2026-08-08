@@ -457,6 +457,99 @@ public sealed class TreeGeneratorTests
         }
     }
 
+    [Theory]
+    [InlineData(0.0, 0.0)]
+    [InlineData(0.25, 0.0625)]
+    [InlineData(0.50, 0.125)]
+    [InlineData(0.75, 0.1875)]
+    [InlineData(1.0, 0.25)]
+    public void GenerateScalesTrunkIrregularityContinuouslyWithDetail(
+        double detail,
+        double expectedIrregularity)
+    {
+        TreeGenerationSettings actualSettings =
+            CreateSettings(
+                generationSeed: 741UL,
+                trunkCrossSection:
+                    TrunkCrossSectionProfile.Square,
+                trunkSegmentCount: 6,
+                trunkIrregularity: 0.25,
+                trunkTwist: 1.0,
+                detail: detail);
+        TreeGenerationSettings expectedSettings =
+            CreateSettings(
+                generationSeed: 741UL,
+                trunkCrossSection:
+                    TrunkCrossSectionProfile.Square,
+                trunkSegmentCount: 6,
+                trunkIrregularity: expectedIrregularity,
+                trunkTwist: 1.0,
+                detail: 1.0);
+
+        string actual =
+            Valve220MapWriter.Serialize(
+                TreeGenerator.Generate(
+                    actualSettings)
+                    .Document);
+        string expected =
+            Valve220MapWriter.Serialize(
+                TreeGenerator.Generate(
+                    expectedSettings)
+                    .Document);
+
+        Assert.Equal(
+            expected,
+            actual);
+    }
+
+    [Fact]
+    public void ChangingIrregularityDetailPreservesCanopyPlacement()
+    {
+        TreeGenerationResult minimum =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 741UL,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount: 6,
+                    trunkIrregularity: 0.25,
+                    trunkTwist: 1.0,
+                    detail: 0.0));
+        TreeGenerationResult maximum =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 741UL,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount: 6,
+                    trunkIrregularity: 0.25,
+                    trunkTwist: 1.0,
+                    detail: 1.0));
+
+        GeneratedTreeBrush[] minimumCanopy =
+            minimum.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+        GeneratedTreeBrush[] maximumCanopy =
+            maximum.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+
+        Assert.Equal(
+            maximumCanopy.Length,
+            minimumCanopy.Length);
+
+        for (int index = 0; index < maximumCanopy.Length; index++) {
+            Assert.Equal(
+                maximumCanopy[index].Bounds,
+                minimumCanopy[index].Bounds);
+        }
+    }
+
     [Fact]
     public void GenerateStoresGeneratorMetadataInWorldspawn()
     {
@@ -495,6 +588,12 @@ public sealed class TreeGeneratorTests
         GridSpacing? gridSpacing = null,
         TrunkCrossSectionProfile trunkCrossSection =
             TreeGenerationSettings.DefaultTrunkCrossSection,
+        int trunkSegmentCount =
+            TreeGenerationSettings.DefaultTrunkSegmentCount,
+        double trunkIrregularity =
+            TreeGenerationSettings.DefaultTrunkIrregularity,
+        double trunkTwist =
+            TreeGenerationSettings.DefaultTrunkTwist,
         double detail = TreeGenerationSettings.DefaultDetail)
     {
         return new TreeGenerationSettings(
@@ -509,7 +608,10 @@ public sealed class TreeGeneratorTests
             gridSpacing ?? GridSpacing.Eight,
             trunkTextureName,
             canopyTextureName,
+            trunkSegmentCount: trunkSegmentCount,
             trunkCrossSection: trunkCrossSection,
+            trunkIrregularity: trunkIrregularity,
+            trunkTwist: trunkTwist,
             detail: detail);
     }
 }

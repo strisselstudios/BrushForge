@@ -1451,6 +1451,109 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
+    public void GenerateMakesSecondaryBranchesGrowOutwardFromTrunk()
+    {
+        for (ulong generationSeed = 1UL; generationSeed <= 32UL; generationSeed++) {
+            TreeGenerationResult result =
+                TreeGenerator.Generate(
+                    CreateSettings(
+                        generationSeed: generationSeed,
+                        trunkCrossSection:
+                            TrunkCrossSectionProfile.Square,
+                        trunkSegmentCount:
+                            TreeGenerationSettings.MinimumTrunkSegmentCount,
+                        trunkIrregularity: 0.0,
+                        trunkTwist: 0.0,
+                        detail: 1.0));
+
+            IGrouping<string, GeneratedTreeBrush>[] paths =
+                GetSecondaryBranchParts(result)
+                    .GroupBy(
+                        branch =>
+                            branch.BranchPath!,
+                        StringComparer.Ordinal)
+                    .ToArray();
+
+            Assert.Equal(
+                TreeBranchSkeletonPlanner.PrimaryBranchCount *
+                TreeBranchSkeletonPlanner.SecondaryBranchesPerPrimary,
+                paths.Length);
+
+            Assert.All(
+                paths,
+                path =>
+                {
+                    GeneratedTreeBrush[] segments =
+                        path
+                            .OrderBy(
+                                segment =>
+                                    segment.BranchSegmentIndex)
+                            .ToArray();
+                    Vector3d firstCenter =
+                        segments[0].Bounds.Center;
+                    Vector3d lastCenter =
+                        segments[^1].Bounds.Center;
+                    double firstRadiusSquared =
+                        (firstCenter.X * firstCenter.X) +
+                        (firstCenter.Y * firstCenter.Y);
+                    double lastRadiusSquared =
+                        (lastCenter.X * lastCenter.X) +
+                        (lastCenter.Y * lastCenter.Y);
+
+                    Assert.True(
+                        lastRadiusSquared >
+                        firstRadiusSquared);
+                });
+        }
+    }
+
+    [Fact]
+    public void GeneratePreventsNetDownwardSecondaryGrowth()
+    {
+        for (ulong generationSeed = 1UL; generationSeed <= 32UL; generationSeed++) {
+            TreeGenerationResult result =
+                TreeGenerator.Generate(
+                    CreateSettings(
+                        generationSeed: generationSeed,
+                        trunkCrossSection:
+                            TrunkCrossSectionProfile.Square,
+                        trunkSegmentCount:
+                            TreeGenerationSettings.MinimumTrunkSegmentCount,
+                        trunkIrregularity: 0.0,
+                        trunkTwist: 0.0,
+                        detail: 1.0));
+
+            IGrouping<string, GeneratedTreeBrush>[] paths =
+                GetSecondaryBranchParts(result)
+                    .GroupBy(
+                        branch =>
+                            branch.BranchPath!,
+                        StringComparer.Ordinal)
+                    .ToArray();
+
+            Assert.All(
+                paths,
+                path =>
+                {
+                    GeneratedTreeBrush[] segments =
+                        path
+                            .OrderBy(
+                                segment =>
+                                    segment.BranchSegmentIndex)
+                            .ToArray();
+                    Vector3d firstCenter =
+                        segments[0].Bounds.Center;
+                    Vector3d lastCenter =
+                        segments[^1].Bounds.Center;
+
+                    Assert.True(
+                        lastCenter.Z >=
+                        firstCenter.Z);
+                });
+        }
+    }
+
+    [Fact]
     public void GenerateStoresGeneratorMetadataInWorldspawn()
     {
         TreeGenerationResult result =

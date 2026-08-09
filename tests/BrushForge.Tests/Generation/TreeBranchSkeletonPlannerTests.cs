@@ -93,6 +93,69 @@ public sealed class TreeBranchSkeletonPlannerTests
     }
 
     [Fact]
+    public void CreateSeparatesSecondarySiblingAttachmentsAndSides()
+    {
+        TreeBranchSkeleton skeleton =
+            TreeBranchSkeletonPlanner.Create(
+                CreateSettings(
+                    seedValue: 24_680UL,
+                    detail: 1.0));
+
+        foreach (
+            PlannedTreeBranch primary in
+            skeleton.Branches.Where(
+                branch =>
+                    branch.Depth == 0)
+        ) {
+            PlannedTreeBranch lowerChild =
+                Assert.Single(
+                    skeleton.Branches,
+                    branch =>
+                        branch.ParentPath == primary.Path &&
+                        branch.Path.EndsWith(
+                            "/S0",
+                            StringComparison.Ordinal));
+            PlannedTreeBranch upperChild =
+                Assert.Single(
+                    skeleton.Branches,
+                    branch =>
+                        branch.ParentPath == primary.Path &&
+                        branch.Path.EndsWith(
+                            "/S1",
+                            StringComparison.Ordinal));
+
+            Assert.InRange(
+                lowerChild.AttachmentFraction,
+                0.46,
+                0.62);
+            Assert.InRange(
+                upperChild.AttachmentFraction,
+                0.70,
+                0.86);
+            Assert.True(
+                upperChild.AttachmentFraction -
+                lowerChild.AttachmentFraction >=
+                0.08);
+            Assert.InRange(
+                lowerChild.AzimuthDegrees,
+                -78.0,
+                -38.0);
+            Assert.InRange(
+                upperChild.AzimuthDegrees,
+                38.0,
+                78.0);
+            Assert.InRange(
+                lowerChild.ElevationDegrees,
+                18.0,
+                44.0);
+            Assert.InRange(
+                upperChild.ElevationDegrees,
+                18.0,
+                44.0);
+        }
+    }
+
+    [Fact]
     public void CreateUsesUniqueStableBranchPaths()
     {
         TreeBranchSkeleton skeleton =

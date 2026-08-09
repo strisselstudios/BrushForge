@@ -16,6 +16,8 @@ internal static class TreeBranchGeometryGenerator
     private const double ParallelReferenceThreshold = 0.90;
     private const double PrimaryMaximumBendFraction = 0.12;
     private const double ChildMaximumBendFraction = 0.16;
+    private const double MinimumChildOutwardComponent = 0.30;
+    private const double MinimumChildUpwardComponent = 0.08;
 
     public static GeneratedTreeBrush[] Generate(
         TreeGenerationSettings settings,
@@ -84,6 +86,8 @@ internal static class TreeBranchGeometryGenerator
                     : ResolveChildBranch(
                         branch,
                         resolvedBranches,
+                        trunkBaseCenter,
+                        trunkTopCenter,
                         minimumHalfExtent,
                         settings.GridSpacing.Units,
                         geometrySegmentCount);
@@ -151,6 +155,8 @@ internal static class TreeBranchGeometryGenerator
     private static ResolvedBranchGeometry ResolveChildBranch(
         PlannedTreeBranch branch,
         Dictionary<string, ResolvedBranchGeometry> resolvedBranches,
+        Vector3d trunkBaseCenter,
+        Vector3d trunkTopCenter,
         double minimumHalfExtent,
         double grid,
         int realizedSegmentCount)
@@ -173,14 +179,20 @@ internal static class TreeBranchGeometryGenerator
         double branchLength = Math.Max(
             grid * 2.0,
             parent.ChordLength * branch.LengthScale);
+        Vector3d outwardDirection =
+            CreateHorizontalOutwardDirection(
+                parentSample.Position,
+                parentSample.Direction,
+                trunkBaseCenter,
+                trunkTopCenter);
+        Vector3d childDirection =
+            CreateChildDirection(
+                parentSample.Direction,
+                branch,
+                outwardDirection);
         Vector3d endCenter =
             parentSample.Position +
-            (
-                CreateChildDirection(
-                    parentSample.Direction,
-                    branch) *
-                branchLength
-            );
+            (childDirection * branchLength);
         double parentHalfExtent =
             Interpolate(
                 parent.StartHalfExtent,
@@ -201,7 +213,8 @@ internal static class TreeBranchGeometryGenerator
             endCenter,
             startHalfExtent,
             endHalfExtent,
-            realizedSegmentCount);
+            realizedSegmentCount,
+            outwardDirection);
     }
 
     private static ResolvedBranchGeometry CreateResolvedGeometry(
@@ -210,13 +223,15 @@ internal static class TreeBranchGeometryGenerator
         Vector3d endCenter,
         double startHalfExtent,
         double endHalfExtent,
-        int realizedSegmentCount)
+        int realizedSegmentCount,
+        Vector3d? childOutwardDirection = null)
     {
         Vector3d[] maximumDetailPath =
             CreateMaximumDetailPath(
                 branch,
                 startCenter,
-                endCenter);
+                endCenter,
+                childOutwardDirection);
         Vector3d[] realizedPath =
             CreateRealizedPath(
                 maximumDetailPath,
@@ -295,7 +310,8 @@ internal static class TreeBranchGeometryGenerator
     private static Vector3d[] CreateMaximumDetailPath(
         PlannedTreeBranch branch,
         Vector3d startCenter,
-        Vector3d endCenter)
+        Vector3d endCenter,
+        Vector3d? childOutwardDirection)
     {
         int maximumSegmentCount =
             TreeDetailRealizationPolicy.ResolveBranchMaximumSegmentCount(
@@ -329,6 +345,14 @@ internal static class TreeBranchGeometryGenerator
                 (up * Math.Sin(phaseRadians))
             )
             .Normalize();
+
+        if (childOutwardDirection is Vector3d outwardDirection) {
+            bendDirection =
+                CreateGenericChildBendDirection(
+                    bendDirection,
+                    outwardDirection);
+        }
+
         double maximumBendFraction =
             branch.Depth == 0
                 ? PrimaryMaximumBendFraction
@@ -473,7 +497,8 @@ internal static class TreeBranchGeometryGenerator
 
     private static Vector3d CreateChildDirection(
         Vector3d parentDirection,
-        PlannedTreeBranch branch)
+        PlannedTreeBranch branch,
+        Vector3d outwardDirection)
     {
         (Vector3d right, Vector3d up) =
             CreatePerpendicularBasis(
@@ -493,17 +518,153 @@ internal static class TreeBranchGeometryGenerator
                 up *
                 Math.Sin(azimuthRadians)
             );
+        Vector3d candidate =
+            (
+                (
+                    parentDirection *
+                    Math.Cos(deflectionRadians)
+                ) +
+                (
+                    radialDirection *
+                    Math.Sin(deflectionRadians)
+                ))
+            .Normalize();
+        return ConstrainGenericChildDirection(
+            candidate,
+            outwardDirection);
+    }
+
+    private static Vector3d CreateHorizontalOutwardDirection(
+        Vector3d attachmentPosition,
+        Vector3d parentDirection,
+        Vector3d trunkBaseCenter,
+        Vector3d trunkTopCenter)
+    {
+        double verticalSpan =
+            trunkTopCenter.Z -
+            trunkBaseCenter.Z;
+        double trunkFraction =
+            Math.Abs(verticalSpan) <=
+            NumericTolerances.UnitVector
+                ? 0.5
+                : Math.Clamp(
+                    (attachmentPosition.Z -
+                        trunkBaseCenter.Z) /
+                    verticalSpan,
+                    0.0,
+                    1.0);
+        Vector3d trunkCenter =
+            trunkBaseCenter +
+            ((trunkTopCenter - trunkBaseCenter) *
+                trunkFraction);
+        Vector3d horizontalRadial =
+            new(
+                attachmentPosition.X - trunkCenter.X,
+                attachmentPosition.Y - trunkCenter.Y,
+                0.0);
+
+        if (
+            horizontalRadial.Length >
+            NumericTolerances.UnitVector
+        ) {
+            return horizontalRadial.Normalize();
+        }
+
+        Vector3d parentHorizontal =
+            new(
+                parentDirection.X,
+                parentDirection.Y,
+                0.0);
+
+        if (
+            parentHorizontal.Length >
+            NumericTolerances.UnitVector
+        ) {
+            return parentHorizontal.Normalize();
+        }
+
+        return Vector3d.UnitX;
+    }
+
+    private static Vector3d ConstrainGenericChildDirection(
+        Vector3d candidate,
+        Vector3d outwardDirection)
+    {
+        Vector3d horizontalTangent =
+            Vector3d.Cross(
+                Vector3d.UnitZ,
+                outwardDirection)
+                .Normalize();
+        double outwardComponent =
+            Math.Max(
+                MinimumChildOutwardComponent,
+                Vector3d.Dot(
+                    candidate,
+                    outwardDirection));
+        double maximumOutwardComponent =
+            Math.BitDecrement(
+                Math.Sqrt(
+                    1.0 -
+                    (MinimumChildUpwardComponent *
+                        MinimumChildUpwardComponent)));
+        outwardComponent =
+            Math.Min(
+                outwardComponent,
+                maximumOutwardComponent);
+        double maximumUpwardComponent =
+            Math.Sqrt(
+                Math.Max(
+                    0.0,
+                    1.0 -
+                    (outwardComponent * outwardComponent)));
+        double upwardComponent =
+            Math.Clamp(
+                Math.Max(
+                    MinimumChildUpwardComponent,
+                    candidate.Z),
+                MinimumChildUpwardComponent,
+                maximumUpwardComponent);
+        double remainingSquared =
+            Math.Max(
+                0.0,
+                1.0 -
+                (outwardComponent * outwardComponent) -
+                (upwardComponent * upwardComponent));
+        double tangentSign =
+            Vector3d.Dot(
+                candidate,
+                horizontalTangent) < 0.0
+                ? -1.0
+                : 1.0;
+        double tangentComponent =
+            Math.Sqrt(remainingSquared) *
+            tangentSign;
 
         return (
-            (
-                parentDirection *
-                Math.Cos(deflectionRadians)
-            ) +
-            (
-                radialDirection *
-                Math.Sin(deflectionRadians)
-            ))
+            (outwardDirection * outwardComponent) +
+            (Vector3d.UnitZ * upwardComponent) +
+            (horizontalTangent * tangentComponent))
             .Normalize();
+    }
+
+    private static Vector3d CreateGenericChildBendDirection(
+        Vector3d candidate,
+        Vector3d outwardDirection)
+    {
+        Vector3d horizontalTangent =
+            Vector3d.Cross(
+                Vector3d.UnitZ,
+                outwardDirection)
+                .Normalize();
+        double tangentSign =
+            Vector3d.Dot(
+                candidate,
+                horizontalTangent) < 0.0
+                ? -1.0
+                : 1.0;
+
+        return horizontalTangent *
+            tangentSign;
     }
 
     private static (Vector3d Right, Vector3d Up) CreatePerpendicularBasis(

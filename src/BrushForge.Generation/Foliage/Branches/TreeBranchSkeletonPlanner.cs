@@ -15,6 +15,14 @@ public static class TreeBranchSkeletonPlanner
 
     private const ulong BranchRandomSalt =
         0x4252414E43484647UL;
+    private const double LowerSecondaryAttachmentMinimum = 0.46;
+    private const double LowerSecondaryAttachmentMaximum = 0.62;
+    private const double UpperSecondaryAttachmentMinimum = 0.70;
+    private const double UpperSecondaryAttachmentMaximum = 0.86;
+    private const double SecondaryAzimuthMinimumMagnitude = 38.0;
+    private const double SecondaryAzimuthMaximumMagnitude = 78.0;
+    private const double SecondaryDeflectionMinimum = 18.0;
+    private const double SecondaryDeflectionMaximum = 44.0;
 
     public static TreeBranchSkeleton Create(
         TreeGenerationSettings settings)
@@ -78,11 +86,17 @@ public static class TreeBranchSkeletonPlanner
                         primaryPath,
                         depth: 1,
                         attachmentFraction:
-                            random.NextDouble(0.48, 0.86),
+                            CreateSecondaryAttachmentFraction(
+                                random,
+                                secondaryIndex),
                         azimuthDegrees:
-                            random.NextDouble(-82.0, 82.0),
+                            CreateSecondaryAzimuthDegrees(
+                                random,
+                                secondaryIndex),
                         elevationDegrees:
-                            random.NextDouble(12.0, 58.0),
+                            random.NextDouble(
+                                SecondaryDeflectionMinimum,
+                                SecondaryDeflectionMaximum),
                         lengthScale:
                             random.NextDouble(0.42, 0.68),
                         startRadiusScale:
@@ -96,6 +110,45 @@ public static class TreeBranchSkeletonPlanner
         }
 
         return new TreeBranchSkeleton(branches);
+    }
+
+    private static double CreateSecondaryAttachmentFraction(
+        DeterministicRandom random,
+        int secondaryIndex)
+    {
+        return secondaryIndex switch
+        {
+            0 => random.NextDouble(
+                LowerSecondaryAttachmentMinimum,
+                LowerSecondaryAttachmentMaximum),
+            1 => random.NextDouble(
+                UpperSecondaryAttachmentMinimum,
+                UpperSecondaryAttachmentMaximum),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(secondaryIndex),
+                secondaryIndex,
+                "The current generic tree archetype defines exactly two secondary branches per primary branch.")
+        };
+    }
+
+    private static double CreateSecondaryAzimuthDegrees(
+        DeterministicRandom random,
+        int secondaryIndex)
+    {
+        double magnitude =
+            random.NextDouble(
+                SecondaryAzimuthMinimumMagnitude,
+                SecondaryAzimuthMaximumMagnitude);
+
+        return secondaryIndex switch
+        {
+            0 => -magnitude,
+            1 => magnitude,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(secondaryIndex),
+                secondaryIndex,
+                "The current generic tree archetype defines exactly two secondary branches per primary branch.")
+        };
     }
 
     private static string CreatePrimaryPath(

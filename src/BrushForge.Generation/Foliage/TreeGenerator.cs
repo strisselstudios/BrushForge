@@ -3,14 +3,15 @@ using BrushForge.Core.Randomness;
 using BrushForge.Geometry.Bounds;
 using BrushForge.Geometry.Brushes;
 using BrushForge.Geometry.Vectors;
+using BrushForge.Generation.Foliage.Branches;
 using BrushForge.Generation.Geometry;
 using BrushForge.MapFormat.Model;
 
 namespace BrushForge.Generation.Foliage;
 
 /// <summary>
-/// Generates a low-brush-count segmented trunk and layered box canopy
-/// suitable for preview and Valve 220 export.
+/// Generates a low-brush-count segmented trunk, deterministic primary
+/// branches, and layered box canopy suitable for preview and Valve 220 export.
 /// </summary>
 public static class TreeGenerator
 {
@@ -99,6 +100,21 @@ public static class TreeGenerator
 
         List<GeneratedTreeBrush> parts =
             trunk.Parts.ToList();
+
+        TreeBranchSkeleton branchSkeleton =
+            TreeBranchSkeletonPlanner.Create(
+                settings);
+        GeneratedTreeBrush[] primaryBranchParts =
+            PrimaryBranchGeometryGenerator.Generate(
+                settings,
+                branchSkeleton,
+                origin,
+                trunk.TopCenter,
+                trunkWidthUnits * grid,
+                canopyWidthUnits * grid);
+
+        parts.AddRange(
+            primaryBranchParts);
 
         DeterministicRandom random =
             new(settings.GenerationSeed);

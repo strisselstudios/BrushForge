@@ -24,13 +24,13 @@ public sealed record GeneratedTreeBrush
         ArgumentNullException.ThrowIfNull(brush);
 
         if (
-            role == TreeBrushRole.Trunk &&
+            role != TreeBrushRole.Canopy &&
             canopyLayerIndex != -1
         ) {
             throw new ArgumentOutOfRangeException(
                 nameof(canopyLayerIndex),
                 canopyLayerIndex,
-                "The trunk brush must use canopy layer index -1.");
+                "A trunk or branch brush must use canopy layer index -1.");
         }
 
         if (

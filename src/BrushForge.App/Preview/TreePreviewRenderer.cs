@@ -55,9 +55,9 @@ internal static class TreePreviewRenderer
             result.Parts
         ) {
             Color color =
-                part.Role == TreeBrushRole.Trunk
-                    ? TrunkColor
-                    : CanopyColor;
+                part.Role == TreeBrushRole.Canopy
+                    ? CanopyColor
+                    : TrunkColor;
 
             DiffuseMaterial material =
                 new(

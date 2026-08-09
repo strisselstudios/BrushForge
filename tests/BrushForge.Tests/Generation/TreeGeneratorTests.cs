@@ -26,6 +26,12 @@ public sealed class TreeGeneratorTests
                     part =>
                         part.Role == TreeBrushRole.Trunk)
                 .ToArray();
+        GeneratedTreeBrush[] branchParts =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch)
+                .ToArray();
         GeneratedTreeBrush[] canopyParts =
             result.Parts
                 .Where(
@@ -34,10 +40,11 @@ public sealed class TreeGeneratorTests
                 .ToArray();
 
         Assert.Equal(3, trunkParts.Length);
+        Assert.Equal(5, branchParts.Length);
         Assert.Equal(4, canopyParts.Length);
-        Assert.Equal(7, result.BrushCount);
+        Assert.Equal(12, result.BrushCount);
         Assert.All(
-            trunkParts,
+            trunkParts.Concat(branchParts),
             part =>
                 Assert.Equal(
                     -1,
@@ -213,6 +220,10 @@ public sealed class TreeGeneratorTests
 
             Assert.True(validation.IsValid);
 
+            if (part.Role == TreeBrushRole.Branch) {
+                continue;
+            }
+
             GridSpacing horizontalSpacing =
                 part.Role == TreeBrushRole.Trunk
                     ? trunkHorizontalSpacing
@@ -361,9 +372,9 @@ public sealed class TreeGeneratorTests
 
         foreach (GeneratedTreeBrush part in result.Parts) {
             string expectedTexture =
-                part.Role == TreeBrushRole.Trunk
-                    ? "BARK"
-                    : "{LEAVES";
+                part.Role == TreeBrushRole.Canopy
+                    ? "{LEAVES"
+                    : "BARK";
 
             Assert.All(
                 part.Brush.Faces,
@@ -834,6 +845,155 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
+    public void GenerateRealizesFiveValidPrimaryBranchBrushes()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 1234UL));
+
+        GeneratedTreeBrush[] branches =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch)
+                .ToArray();
+
+        Assert.Equal(
+            5,
+            branches.Length);
+        Assert.All(
+            branches,
+            branch =>
+            {
+                Assert.Equal(
+                    -1,
+                    branch.CanopyLayerIndex);
+                Assert.Equal(
+                    6,
+                    branch.Brush.FaceCount);
+                Assert.True(
+                    ConvexBrushValidator.Validate(
+                        branch.Brush)
+                        .IsValid);
+            });
+    }
+
+    [Fact]
+    public void GenerateUsesSeedToVaryPrimaryBranchGeometry()
+    {
+        TreeGenerationResult first =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 101UL));
+        TreeGenerationResult second =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 202UL));
+
+        Bounds3d[] firstBounds =
+            GetBranchBounds(first);
+        Bounds3d[] secondBounds =
+            GetBranchBounds(second);
+
+        Assert.False(
+            firstBounds.SequenceEqual(
+                secondBounds));
+    }
+
+    [Fact]
+    public void GenerateKeepsPrimaryBranchesStableAcrossDetailChanges()
+    {
+        TreeGenerationSettings minimumSettings =
+            CreateSettings(
+                generationSeed: 741UL,
+                trunkCrossSection:
+                    TrunkCrossSectionProfile.Square,
+                trunkSegmentCount:
+                    TreeGenerationSettings.MinimumTrunkSegmentCount,
+                trunkIrregularity: 0.0,
+                trunkTwist: 0.0,
+                detail: 0.0);
+        TreeGenerationSettings maximumSettings =
+            minimumSettings.WithDetail(1.0);
+
+        Bounds3d[] minimumBounds =
+            GetBranchBounds(
+                TreeGenerator.Generate(
+                    minimumSettings));
+        Bounds3d[] maximumBounds =
+            GetBranchBounds(
+                TreeGenerator.Generate(
+                    maximumSettings));
+
+        Assert.True(
+            maximumBounds.SequenceEqual(
+                minimumBounds));
+    }
+
+    [Fact]
+    public void GenerateUsesTrunkTextureForPrimaryBranches()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkTextureName: "BRANCH_BARK",
+                    canopyTextureName: "LEAF"));
+
+        GeneratedTreeBrush[] branches =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch)
+                .ToArray();
+
+        Assert.All(
+            branches,
+            branch =>
+                Assert.All(
+                    branch.Brush.Faces,
+                    face =>
+                        Assert.Equal(
+                            "BRANCH_BARK",
+                            face.TextureName)));
+    }
+
+    [Fact]
+    public void GeneratePlacesPrimaryBranchesAroundMultipleSidesOfTrunk()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 12_345UL));
+        Bounds3d[] branches =
+            GetBranchBounds(result);
+        Vector3d trunkCenter =
+            result.Parts
+                .First(
+                    part =>
+                        part.Role == TreeBrushRole.Trunk)
+                .Bounds
+                .Center;
+
+        Assert.Contains(
+            branches,
+            bounds =>
+                bounds.Center.X < trunkCenter.X);
+        Assert.Contains(
+            branches,
+            bounds =>
+                bounds.Center.X > trunkCenter.X);
+        Assert.Contains(
+            branches,
+            bounds =>
+                bounds.Center.Y < trunkCenter.Y);
+        Assert.Contains(
+            branches,
+            bounds =>
+                bounds.Center.Y > trunkCenter.Y);
+    }
+
+    [Fact]
     public void GenerateStoresGeneratorMetadataInWorldspawn()
     {
         TreeGenerationResult result =
@@ -857,6 +1017,19 @@ public sealed class TreeGeneratorTests
 
         Assert.Equal("tree", generator);
         Assert.Equal("123456", seed);
+    }
+
+    private static Bounds3d[] GetBranchBounds(
+        TreeGenerationResult result)
+    {
+        return result.Parts
+            .Where(
+                part =>
+                    part.Role == TreeBrushRole.Branch)
+            .Select(
+                part =>
+                    part.Bounds)
+            .ToArray();
     }
 
     private static Bounds3d GetCanopyEnvelope(

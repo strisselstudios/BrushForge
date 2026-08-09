@@ -41,9 +41,9 @@ public sealed class TreeGeneratorTests
                 .ToArray();
 
         Assert.Equal(3, trunkParts.Length);
-        Assert.Equal(15, branchParts.Length);
+        Assert.Equal(35, branchParts.Length);
         Assert.Equal(4, canopyParts.Length);
-        Assert.Equal(22, result.BrushCount);
+        Assert.Equal(42, result.BrushCount);
         Assert.All(
             trunkParts.Concat(branchParts),
             part =>
@@ -843,33 +843,69 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
-    public void GenerateRealizesFiveValidPrimaryBranchBrushes()
+    public void GenerateRealizesFiveSegmentedValidPrimaryBranchPathsAtFullDetail()
     {
         TreeGenerationResult result =
             TreeGenerator.Generate(
                 CreateSettings(
-                    generationSeed: 1234UL));
+                    generationSeed: 1234UL,
+                    detail: 1.0));
 
         GeneratedTreeBrush[] branches =
             GetPrimaryBranchParts(result);
+        IGrouping<string, GeneratedTreeBrush>[] paths =
+            branches
+                .GroupBy(
+                    branch =>
+                        branch.BranchPath!,
+                    StringComparer.Ordinal)
+                .ToArray();
 
         Assert.Equal(
-            5,
+            15,
             branches.Length);
+        Assert.Equal(
+            5,
+            paths.Length);
         Assert.All(
-            branches,
-            branch =>
+            paths,
+            path =>
             {
+                GeneratedTreeBrush[] segments =
+                    path
+                        .OrderBy(
+                            branch =>
+                                branch.BranchSegmentIndex)
+                        .ToArray();
+
+                Assert.Equal(3, segments.Length);
                 Assert.Equal(
-                    -1,
-                    branch.CanopyLayerIndex);
+                    0,
+                    segments[0].BranchSegmentIndex);
                 Assert.Equal(
-                    6,
-                    branch.Brush.FaceCount);
-                Assert.True(
-                    ConvexBrushValidator.Validate(
-                        branch.Brush)
-                        .IsValid);
+                    1,
+                    segments[1].BranchSegmentIndex);
+                Assert.Equal(
+                    2,
+                    segments[2].BranchSegmentIndex);
+                Assert.All(
+                    segments,
+                    branch =>
+                    {
+                        Assert.Equal(
+                            -1,
+                            branch.CanopyLayerIndex);
+                        Assert.Equal(
+                            3,
+                            branch.BranchSegmentCount);
+                        Assert.Equal(
+                            6,
+                            branch.Brush.FaceCount);
+                        Assert.True(
+                            ConvexBrushValidator.Validate(
+                                branch.Brush)
+                                .IsValid);
+                    });
             });
     }
 
@@ -896,7 +932,7 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
-    public void GenerateKeepsPrimaryBranchesStableAcrossDetailChanges()
+    public void GenerateKeepsPrimaryBranchIdentitiesStableAcrossDetailChanges()
     {
         TreeGenerationSettings minimumSettings =
             CreateSettings(
@@ -911,18 +947,30 @@ public sealed class TreeGeneratorTests
         TreeGenerationSettings maximumSettings =
             minimumSettings.WithDetail(1.0);
 
-        Bounds3d[] minimumBounds =
-            GetPrimaryBranchBounds(
+        string[] minimumPaths =
+            GetPrimaryBranchParts(
                 TreeGenerator.Generate(
-                    minimumSettings));
-        Bounds3d[] maximumBounds =
-            GetPrimaryBranchBounds(
+                    minimumSettings))
+                .Select(
+                    branch =>
+                        branch.BranchPath!)
+                .Distinct(
+                    StringComparer.Ordinal)
+                .ToArray();
+        string[] maximumPaths =
+            GetPrimaryBranchParts(
                 TreeGenerator.Generate(
-                    maximumSettings));
+                    maximumSettings))
+                .Select(
+                    branch =>
+                        branch.BranchPath!)
+                .Distinct(
+                    StringComparer.Ordinal)
+                .ToArray();
 
-        Assert.True(
-            maximumBounds.SequenceEqual(
-                minimumBounds));
+        Assert.Equal(
+            minimumPaths,
+            maximumPaths);
     }
 
     [Fact]
@@ -988,7 +1036,7 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
-    public void GenerateRealizesTenValidSecondaryBranchBrushesAtFullDetail()
+    public void GenerateRealizesTenSegmentedValidSecondaryBranchPathsAtFullDetail()
     {
         TreeGenerationResult result =
             TreeGenerator.Generate(
@@ -1004,25 +1052,57 @@ public sealed class TreeGeneratorTests
                         part.BranchPath is not null &&
                         part.BranchPath.Contains('/'))
                 .ToArray();
+        IGrouping<string, GeneratedTreeBrush>[] paths =
+            secondaries
+                .GroupBy(
+                    branch =>
+                        branch.BranchPath!,
+                    StringComparer.Ordinal)
+                .ToArray();
 
         Assert.Equal(
-            10,
+            20,
             secondaries.Length);
+        Assert.Equal(
+            10,
+            paths.Length);
         Assert.All(
-            secondaries,
-            branch =>
+            paths,
+            path =>
             {
-                Assert.True(
-                    branch.BranchPath!.Contains(
-                        "/S",
-                        StringComparison.Ordinal));
+                GeneratedTreeBrush[] segments =
+                    path
+                        .OrderBy(
+                            branch =>
+                                branch.BranchSegmentIndex)
+                        .ToArray();
+
+                Assert.Equal(2, segments.Length);
                 Assert.Equal(
-                    6,
-                    branch.Brush.FaceCount);
-                Assert.True(
-                    ConvexBrushValidator.Validate(
-                        branch.Brush)
-                        .IsValid);
+                    0,
+                    segments[0].BranchSegmentIndex);
+                Assert.Equal(
+                    1,
+                    segments[1].BranchSegmentIndex);
+                Assert.All(
+                    segments,
+                    branch =>
+                    {
+                        Assert.True(
+                            branch.BranchPath!.Contains(
+                                "/S",
+                                StringComparison.Ordinal));
+                        Assert.Equal(
+                            2,
+                            branch.BranchSegmentCount);
+                        Assert.Equal(
+                            6,
+                            branch.Brush.FaceCount);
+                        Assert.True(
+                            ConvexBrushValidator.Validate(
+                                branch.Brush)
+                                .IsValid);
+                    });
             });
     }
 
@@ -1088,11 +1168,190 @@ public sealed class TreeGeneratorTests
                 .Select(
                     part =>
                         part.BranchPath!)
+                .Distinct(
+                    StringComparer.Ordinal)
                 .ToArray();
 
         Assert.Equal(
             expectedPaths,
             actualPaths);
+    }
+
+    [Theory]
+    [InlineData(0.0, 1)]
+    [InlineData(0.35, 2)]
+    [InlineData(0.55, 2)]
+    [InlineData(0.75, 3)]
+    [InlineData(1.0, 3)]
+    public void GenerateScalesPrimaryBranchSegmentationWithDetail(
+        double detail,
+        int expectedSegmentsPerPath)
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 51_515UL,
+                    detail: detail));
+        IGrouping<string, GeneratedTreeBrush>[] paths =
+            GetPrimaryBranchParts(result)
+                .GroupBy(
+                    branch =>
+                        branch.BranchPath!,
+                    StringComparer.Ordinal)
+                .ToArray();
+
+        Assert.Equal(5, paths.Length);
+        Assert.All(
+            paths,
+            path =>
+            {
+                GeneratedTreeBrush[] segments =
+                    path.ToArray();
+
+                Assert.Equal(
+                    expectedSegmentsPerPath,
+                    segments.Length);
+                Assert.All(
+                    segments,
+                    segment =>
+                        Assert.Equal(
+                            expectedSegmentsPerPath,
+                            segment.BranchSegmentCount));
+            });
+    }
+
+    [Fact]
+    public void GenerateBendsPrimaryBranchPathsAtFullDetail()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 7_777UL,
+                    detail: 1.0));
+        IGrouping<string, GeneratedTreeBrush>[] paths =
+            GetPrimaryBranchParts(result)
+                .GroupBy(
+                    branch =>
+                        branch.BranchPath!,
+                    StringComparer.Ordinal)
+                .ToArray();
+
+        Assert.All(
+            paths,
+            path =>
+            {
+                Vector3d[] centers =
+                    path
+                        .OrderBy(
+                            segment =>
+                                segment.BranchSegmentIndex)
+                        .Select(
+                            segment =>
+                                segment.Bounds.Center)
+                        .ToArray();
+                Vector3d firstDirection =
+                    centers[1] - centers[0];
+                Vector3d secondDirection =
+                    centers[2] - centers[1];
+
+                Assert.True(
+                    Vector3d.Cross(
+                        firstDirection,
+                        secondDirection)
+                        .Length > 0.001);
+            });
+    }
+
+    [Fact]
+    public void GenerateStoresSequentialBranchSegmentMetadata()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 90_909UL,
+                    detail: 1.0));
+        IGrouping<string, GeneratedTreeBrush>[] paths =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch)
+                .GroupBy(
+                    part =>
+                        part.BranchPath!,
+                    StringComparer.Ordinal)
+                .ToArray();
+
+        Assert.All(
+            paths,
+            path =>
+            {
+                GeneratedTreeBrush[] segments =
+                    path
+                        .OrderBy(
+                            segment =>
+                                segment.BranchSegmentIndex)
+                        .ToArray();
+                int expectedCount =
+                    segments.Length;
+
+                Assert.Equal(
+                    Enumerable.Range(
+                        0,
+                        expectedCount),
+                    segments.Select(
+                        segment =>
+                            segment.BranchSegmentIndex));
+                Assert.All(
+                    segments,
+                    segment =>
+                        Assert.Equal(
+                            expectedCount,
+                            segment.BranchSegmentCount));
+            });
+    }
+
+    [Fact]
+    public void GenerateReproducesSegmentedBranchGeometryForSameSeed()
+    {
+        TreeGenerationSettings settings =
+            CreateSettings(
+                generationSeed: 61_234UL,
+                detail: 1.0);
+        GeneratedTreeBrush[] first =
+            TreeGenerator.Generate(
+                settings)
+                .Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch)
+                .ToArray();
+        GeneratedTreeBrush[] second =
+            TreeGenerator.Generate(
+                settings)
+                .Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch)
+                .ToArray();
+
+        Assert.Equal(
+            first.Length,
+            second.Length);
+
+        for (int index = 0; index < first.Length; index++) {
+            Assert.Equal(
+                first[index].BranchPath,
+                second[index].BranchPath);
+            Assert.Equal(
+                first[index].BranchSegmentIndex,
+                second[index].BranchSegmentIndex);
+            Assert.Equal(
+                first[index].BranchSegmentCount,
+                second[index].BranchSegmentCount);
+            Assert.Equal(
+                first[index].Bounds,
+                second[index].Bounds);
+        }
     }
 
     [Fact]

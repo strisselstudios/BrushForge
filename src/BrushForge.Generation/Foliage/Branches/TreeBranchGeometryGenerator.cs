@@ -7,14 +7,15 @@ using BrushForge.Generation.Geometry;
 namespace BrushForge.Generation.Foliage.Branches;
 
 /// <summary>
-/// Resolves the stable branch skeleton into arbitrary-axis tapered brushes.
-/// Geometry for the complete skeleton is resolved before Detail filters which
-/// branches are realized, so increasing Detail reveals branches without
-/// rerolling or moving the existing hierarchy.
+/// Resolves the stable branch skeleton into arbitrary-axis tapered brush paths.
+/// The skeleton remains Detail-independent while Detail controls how many
+/// connected segments are used to realize each visible branch path.
 /// </summary>
 internal static class TreeBranchGeometryGenerator
 {
     private const double ParallelReferenceThreshold = 0.90;
+    private const double PrimaryMaximumBendFraction = 0.12;
+    private const double ChildMaximumBendFraction = 0.16;
 
     public static GeneratedTreeBrush[] Generate(
         TreeGenerationSettings settings,
@@ -53,7 +54,7 @@ internal static class TreeBranchGeometryGenerator
                 skeleton.Count,
                 StringComparer.Ordinal);
         List<GeneratedTreeBrush> realizedParts =
-            new(skeleton.Count);
+            new(skeleton.Count * 2);
         Vector3d trunkAxis =
             trunkTopCenter - trunkBaseCenter;
         double minimumHalfExtent =
@@ -61,6 +62,14 @@ internal static class TreeBranchGeometryGenerator
             4.0;
 
         foreach (PlannedTreeBranch branch in skeleton.Branches) {
+            int realizedSegmentCount =
+                TreeDetailRealizationPolicy.ResolveBranchSegmentCount(
+                    settings,
+                    branch);
+            int geometrySegmentCount =
+                Math.Max(
+                    1,
+                    realizedSegmentCount);
             ResolvedBranchGeometry geometry =
                 branch.Depth == 0
                     ? ResolvePrimaryBranch(
@@ -70,46 +79,29 @@ internal static class TreeBranchGeometryGenerator
                         realizedTrunkWidth,
                         realizedCanopyWidth,
                         minimumHalfExtent,
-                        settings.GridSpacing.Units)
+                        settings.GridSpacing.Units,
+                        geometrySegmentCount)
                     : ResolveChildBranch(
                         branch,
                         resolvedBranches,
                         minimumHalfExtent,
-                        settings.GridSpacing.Units);
+                        settings.GridSpacing.Units,
+                        geometrySegmentCount);
 
             resolvedBranches.Add(
                 branch.Path,
                 geometry);
 
-            if (settings.Detail < branch.RequiredDetail) {
+            if (realizedSegmentCount == 0) {
                 continue;
             }
 
-            ConvexBrush brush =
-                OrientedSquareFrustumBrushFactory.Create(
-                    geometry.StartCenter,
-                    geometry.EndCenter,
-                    geometry.StartHalfExtent,
-                    geometry.EndHalfExtent,
-                    settings.TrunkTextureName);
-            Bounds3d bounds =
-                Bounds3d.FromPoints(
-                [
-                    geometry.StartCenter,
-                    geometry.EndCenter
-                ])
-                .Expand(
-                    Math.Max(
-                        geometry.StartHalfExtent,
-                        geometry.EndHalfExtent));
-
-            realizedParts.Add(
-                new GeneratedTreeBrush(
-                    TreeBrushRole.Branch,
-                    canopyLayerIndex: -1,
-                    brush,
-                    bounds,
-                    branch.Path));
+            AddRealizedSegments(
+                realizedParts,
+                settings,
+                branch,
+                geometry,
+                realizedSegmentCount);
         }
 
         return realizedParts.ToArray();
@@ -122,7 +114,8 @@ internal static class TreeBranchGeometryGenerator
         double realizedTrunkWidth,
         double realizedCanopyWidth,
         double minimumHalfExtent,
-        double grid)
+        double grid,
+        int realizedSegmentCount)
     {
         Vector3d startCenter =
             trunkBaseCenter +
@@ -146,46 +139,45 @@ internal static class TreeBranchGeometryGenerator
             0.5 *
             branch.EndRadiusScale);
 
-        return new ResolvedBranchGeometry(
+        return CreateResolvedGeometry(
+            branch,
             startCenter,
             endCenter,
             startHalfExtent,
-            endHalfExtent);
+            endHalfExtent,
+            realizedSegmentCount);
     }
 
     private static ResolvedBranchGeometry ResolveChildBranch(
         PlannedTreeBranch branch,
         Dictionary<string, ResolvedBranchGeometry> resolvedBranches,
         double minimumHalfExtent,
-        double grid)
+        double grid,
+        int realizedSegmentCount)
     {
         if (
             branch.ParentPath is null ||
             !resolvedBranches.TryGetValue(
                 branch.ParentPath,
-                out ResolvedBranchGeometry parent)
+                out ResolvedBranchGeometry? parent) ||
+            parent is null
         ) {
             throw new InvalidOperationException(
                 $"The parent geometry for branch '{branch.Path}' was not resolved before its child.");
         }
 
-        Vector3d parentAxisVector =
-            parent.EndCenter - parent.StartCenter;
-        double parentLength =
-            parentAxisVector.Length;
-        Vector3d parentDirection =
-            parentAxisVector.Normalize();
-        Vector3d startCenter =
-            parent.StartCenter +
-            (parentAxisVector * branch.AttachmentFraction);
+        PathSample parentSample =
+            SamplePath(
+                parent.Centers,
+                branch.AttachmentFraction);
         double branchLength = Math.Max(
             grid * 2.0,
-            parentLength * branch.LengthScale);
+            parent.ChordLength * branch.LengthScale);
         Vector3d endCenter =
-            startCenter +
+            parentSample.Position +
             (
                 CreateChildDirection(
-                    parentDirection,
+                    parentSample.Direction,
                     branch) *
                 branchLength
             );
@@ -203,11 +195,258 @@ internal static class TreeBranchGeometryGenerator
             parentHalfExtent *
             branch.EndRadiusScale);
 
-        return new ResolvedBranchGeometry(
-            startCenter,
+        return CreateResolvedGeometry(
+            branch,
+            parentSample.Position,
             endCenter,
             startHalfExtent,
-            endHalfExtent);
+            endHalfExtent,
+            realizedSegmentCount);
+    }
+
+    private static ResolvedBranchGeometry CreateResolvedGeometry(
+        PlannedTreeBranch branch,
+        Vector3d startCenter,
+        Vector3d endCenter,
+        double startHalfExtent,
+        double endHalfExtent,
+        int realizedSegmentCount)
+    {
+        Vector3d[] maximumDetailPath =
+            CreateMaximumDetailPath(
+                branch,
+                startCenter,
+                endCenter);
+        Vector3d[] realizedPath =
+            CreateRealizedPath(
+                maximumDetailPath,
+                realizedSegmentCount);
+
+        return new ResolvedBranchGeometry(
+            realizedPath,
+            startHalfExtent,
+            endHalfExtent,
+            startCenter.DistanceTo(endCenter));
+    }
+
+    private static void AddRealizedSegments(
+        List<GeneratedTreeBrush> realizedParts,
+        TreeGenerationSettings settings,
+        PlannedTreeBranch branch,
+        ResolvedBranchGeometry geometry,
+        int realizedSegmentCount)
+    {
+        for (
+            int segmentIndex = 0;
+            segmentIndex < realizedSegmentCount;
+            segmentIndex++
+        ) {
+            double startFraction =
+                segmentIndex /
+                (double)realizedSegmentCount;
+            double endFraction =
+                (segmentIndex + 1) /
+                (double)realizedSegmentCount;
+            Vector3d startCenter =
+                geometry.Centers[segmentIndex];
+            Vector3d endCenter =
+                geometry.Centers[segmentIndex + 1];
+            double startHalfExtent =
+                Interpolate(
+                    geometry.StartHalfExtent,
+                    geometry.EndHalfExtent,
+                    startFraction);
+            double endHalfExtent =
+                Interpolate(
+                    geometry.StartHalfExtent,
+                    geometry.EndHalfExtent,
+                    endFraction);
+            ConvexBrush brush =
+                OrientedSquareFrustumBrushFactory.Create(
+                    startCenter,
+                    endCenter,
+                    startHalfExtent,
+                    endHalfExtent,
+                    settings.TrunkTextureName);
+            Bounds3d bounds =
+                Bounds3d.FromPoints(
+                [
+                    startCenter,
+                    endCenter
+                ])
+                .Expand(
+                    Math.Max(
+                        startHalfExtent,
+                        endHalfExtent));
+
+            realizedParts.Add(
+                new GeneratedTreeBrush(
+                    TreeBrushRole.Branch,
+                    canopyLayerIndex: -1,
+                    brush,
+                    bounds,
+                    branch.Path,
+                    segmentIndex,
+                    realizedSegmentCount));
+        }
+    }
+
+    private static Vector3d[] CreateMaximumDetailPath(
+        PlannedTreeBranch branch,
+        Vector3d startCenter,
+        Vector3d endCenter)
+    {
+        int maximumSegmentCount =
+            TreeDetailRealizationPolicy.ResolveBranchMaximumSegmentCount(
+                branch);
+        Vector3d[] centers =
+            new Vector3d[maximumSegmentCount + 1];
+
+        centers[0] = startCenter;
+        centers[^1] = endCenter;
+
+        if (maximumSegmentCount == 1) {
+            return centers;
+        }
+
+        Vector3d axisVector =
+            endCenter - startCenter;
+        double length =
+            axisVector.Length;
+        Vector3d axis =
+            axisVector.Normalize();
+        (Vector3d right, Vector3d up) =
+            CreatePerpendicularBasis(axis);
+        double phaseRadians =
+            DegreesToRadians(
+                branch.AzimuthDegrees +
+                (branch.ElevationDegrees * 0.5) +
+                (branch.Depth * 53.0));
+        Vector3d bendDirection =
+            (
+                (right * Math.Cos(phaseRadians)) +
+                (up * Math.Sin(phaseRadians))
+            )
+            .Normalize();
+        double maximumBendFraction =
+            branch.Depth == 0
+                ? PrimaryMaximumBendFraction
+                : ChildMaximumBendFraction;
+
+        for (
+            int pointIndex = 1;
+            pointIndex < maximumSegmentCount;
+            pointIndex++
+        ) {
+            double fraction =
+                pointIndex /
+                (double)maximumSegmentCount;
+            double bendMagnitude =
+                length *
+                maximumBendFraction *
+                Math.Sin(
+                    Math.PI * fraction);
+
+            centers[pointIndex] =
+                startCenter +
+                (axisVector * fraction) +
+                (bendDirection * bendMagnitude);
+        }
+
+        return centers;
+    }
+
+    private static Vector3d[] CreateRealizedPath(
+        Vector3d[] maximumDetailPath,
+        int realizedSegmentCount)
+    {
+        if (realizedSegmentCount <= 0) {
+            throw new ArgumentOutOfRangeException(
+                nameof(realizedSegmentCount),
+                realizedSegmentCount,
+                "A realized branch path requires at least one segment.");
+        }
+
+        int maximumSegmentCount =
+            maximumDetailPath.Length - 1;
+
+        if (realizedSegmentCount > maximumSegmentCount) {
+            throw new ArgumentOutOfRangeException(
+                nameof(realizedSegmentCount),
+                realizedSegmentCount,
+                "A realized branch path cannot exceed its maximum segment count.");
+        }
+
+        if (realizedSegmentCount == maximumSegmentCount) {
+            return maximumDetailPath.ToArray();
+        }
+
+        Vector3d[] centers =
+            new Vector3d[realizedSegmentCount + 1];
+
+        for (
+            int pointIndex = 0;
+            pointIndex <= realizedSegmentCount;
+            pointIndex++
+        ) {
+            double fraction =
+                pointIndex /
+                (double)realizedSegmentCount;
+
+            centers[pointIndex] =
+                SamplePath(
+                    maximumDetailPath,
+                    fraction)
+                .Position;
+        }
+
+        return centers;
+    }
+
+    private static PathSample SamplePath(
+        Vector3d[] centers,
+        double fraction)
+    {
+        if (centers.Length < 2) {
+            throw new ArgumentException(
+                "A branch path requires at least two centers.",
+                nameof(centers));
+        }
+
+        double clampedFraction =
+            Math.Clamp(
+                fraction,
+                0.0,
+                1.0);
+        double scaledPosition =
+            clampedFraction *
+            (centers.Length - 1);
+        int segmentIndex =
+            clampedFraction >= 1.0
+                ? centers.Length - 2
+                : (int)Math.Floor(
+                    scaledPosition);
+        double localFraction =
+            clampedFraction >= 1.0
+                ? 1.0
+                : scaledPosition - segmentIndex;
+        Vector3d segmentStart =
+            centers[segmentIndex];
+        Vector3d segmentEnd =
+            centers[segmentIndex + 1];
+        Vector3d direction =
+            (segmentEnd - segmentStart)
+                .Normalize();
+        Vector3d position =
+            segmentStart +
+            (
+                (segmentEnd - segmentStart) *
+                localFraction
+            );
+
+        return new PathSample(
+            position,
+            direction);
     }
 
     private static Vector3d CreatePrimaryDirection(
@@ -235,24 +474,9 @@ internal static class TreeBranchGeometryGenerator
         Vector3d parentDirection,
         PlannedTreeBranch branch)
     {
-        Vector3d reference =
-            Math.Abs(
-                Vector3d.Dot(
-                    parentDirection,
-                    Vector3d.UnitZ)) <
-                ParallelReferenceThreshold
-                ? Vector3d.UnitZ
-                : Vector3d.UnitY;
-        Vector3d right =
-            Vector3d.Cross(
-                reference,
-                parentDirection)
-                .Normalize();
-        Vector3d up =
-            Vector3d.Cross(
-                parentDirection,
-                right)
-                .Normalize();
+        (Vector3d right, Vector3d up) =
+            CreatePerpendicularBasis(
+                parentDirection);
         double azimuthRadians =
             DegreesToRadians(
                 branch.AzimuthDegrees);
@@ -279,6 +503,33 @@ internal static class TreeBranchGeometryGenerator
                 Math.Sin(deflectionRadians)
             ))
             .Normalize();
+    }
+
+    private static (Vector3d Right, Vector3d Up) CreatePerpendicularBasis(
+        Vector3d direction)
+    {
+        Vector3d reference =
+            Math.Abs(
+                Vector3d.Dot(
+                    direction,
+                    Vector3d.UnitZ)) <
+                ParallelReferenceThreshold
+                ? Vector3d.UnitZ
+                : Vector3d.UnitY;
+        Vector3d right =
+            Vector3d.Cross(
+                reference,
+                direction)
+                .Normalize();
+        Vector3d up =
+            Vector3d.Cross(
+                direction,
+                right)
+                .Normalize();
+
+        return (
+            right,
+            up);
     }
 
     private static double Interpolate(
@@ -312,9 +563,13 @@ internal static class TreeBranchGeometryGenerator
         }
     }
 
-    private readonly record struct ResolvedBranchGeometry(
-        Vector3d StartCenter,
-        Vector3d EndCenter,
+    private sealed record ResolvedBranchGeometry(
+        Vector3d[] Centers,
         double StartHalfExtent,
-        double EndHalfExtent);
+        double EndHalfExtent,
+        double ChordLength);
+
+    private readonly record struct PathSample(
+        Vector3d Position,
+        Vector3d Direction);
 }

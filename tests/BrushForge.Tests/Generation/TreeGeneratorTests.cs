@@ -4,6 +4,7 @@ using BrushForge.Geometry.Bounds;
 using BrushForge.Geometry.Validation;
 using BrushForge.Geometry.Vectors;
 using BrushForge.Generation.Foliage;
+using BrushForge.Generation.Foliage.Branches;
 using BrushForge.MapFormat.Model;
 using BrushForge.MapFormat.Serialization;
 using BrushForge.MapFormat.Validation;
@@ -40,9 +41,9 @@ public sealed class TreeGeneratorTests
                 .ToArray();
 
         Assert.Equal(3, trunkParts.Length);
-        Assert.Equal(5, branchParts.Length);
+        Assert.Equal(15, branchParts.Length);
         Assert.Equal(4, canopyParts.Length);
-        Assert.Equal(12, result.BrushCount);
+        Assert.Equal(22, result.BrushCount);
         Assert.All(
             trunkParts.Concat(branchParts),
             part =>
@@ -437,7 +438,7 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
-    public void ChangingDetailPreservesTreeAndCanopyEnvelope()
+    public void ChangingDetailPreservesCanopyEnvelope()
     {
         TreeGenerationResult minimum =
             TreeGenerator.Generate(
@@ -455,9 +456,6 @@ public sealed class TreeGeneratorTests
                         TrunkCrossSectionProfile.Octagonal,
                     detail: 1.0));
 
-        Assert.Equal(
-            maximum.Bounds,
-            minimum.Bounds);
         Assert.Equal(
             GetCanopyEnvelope(maximum),
             GetCanopyEnvelope(minimum));
@@ -558,15 +556,15 @@ public sealed class TreeGeneratorTests
                 detail: 1.0);
 
         string actual =
-            Valve220MapWriter.Serialize(
+            CreateRoleMapSignature(
                 TreeGenerator.Generate(
-                    actualSettings)
-                    .Document);
+                    actualSettings),
+                TreeBrushRole.Trunk);
         string expected =
-            Valve220MapWriter.Serialize(
+            CreateRoleMapSignature(
                 TreeGenerator.Generate(
-                    expectedSettings)
-                    .Document);
+                    expectedSettings),
+                TreeBrushRole.Trunk);
 
         Assert.Equal(
             expected,
@@ -661,15 +659,15 @@ public sealed class TreeGeneratorTests
                 detail: 1.0);
 
         string actual =
-            Valve220MapWriter.Serialize(
+            CreateRoleMapSignature(
                 TreeGenerator.Generate(
-                    actualSettings)
-                    .Document);
+                    actualSettings),
+                TreeBrushRole.Trunk);
         string expected =
-            Valve220MapWriter.Serialize(
+            CreateRoleMapSignature(
                 TreeGenerator.Generate(
-                    expectedSettings)
-                    .Document);
+                    expectedSettings),
+                TreeBrushRole.Trunk);
 
         Assert.Equal(
             expected,
@@ -853,11 +851,7 @@ public sealed class TreeGeneratorTests
                     generationSeed: 1234UL));
 
         GeneratedTreeBrush[] branches =
-            result.Parts
-                .Where(
-                    part =>
-                        part.Role == TreeBrushRole.Branch)
-                .ToArray();
+            GetPrimaryBranchParts(result);
 
         Assert.Equal(
             5,
@@ -918,11 +912,11 @@ public sealed class TreeGeneratorTests
             minimumSettings.WithDetail(1.0);
 
         Bounds3d[] minimumBounds =
-            GetBranchBounds(
+            GetPrimaryBranchBounds(
                 TreeGenerator.Generate(
                     minimumSettings));
         Bounds3d[] maximumBounds =
-            GetBranchBounds(
+            GetPrimaryBranchBounds(
                 TreeGenerator.Generate(
                     maximumSettings));
 
@@ -966,7 +960,7 @@ public sealed class TreeGeneratorTests
                 CreateSettings(
                     generationSeed: 12_345UL));
         Bounds3d[] branches =
-            GetBranchBounds(result);
+            GetPrimaryBranchBounds(result);
         Vector3d trunkCenter =
             result.Parts
                 .First(
@@ -994,6 +988,114 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
+    public void GenerateRealizesTenValidSecondaryBranchBrushesAtFullDetail()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 8_080UL,
+                    detail: 1.0));
+
+        GeneratedTreeBrush[] secondaries =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch &&
+                        part.BranchPath is not null &&
+                        part.BranchPath.Contains('/'))
+                .ToArray();
+
+        Assert.Equal(
+            10,
+            secondaries.Length);
+        Assert.All(
+            secondaries,
+            branch =>
+            {
+                Assert.True(
+                    branch.BranchPath!.Contains(
+                        "/S",
+                        StringComparison.Ordinal));
+                Assert.Equal(
+                    6,
+                    branch.Brush.FaceCount);
+                Assert.True(
+                    ConvexBrushValidator.Validate(
+                        branch.Brush)
+                        .IsValid);
+            });
+    }
+
+    [Fact]
+    public void GenerateKeepsSecondaryBranchesHiddenAtMinimumDetail()
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 8_080UL,
+                    detail: 0.0));
+
+        GeneratedTreeBrush[] branches =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch)
+                .ToArray();
+
+        Assert.Equal(
+            5,
+            branches.Length);
+        Assert.DoesNotContain(
+            branches,
+            branch =>
+                branch.BranchPath is not null &&
+                branch.BranchPath.Contains('/'));
+    }
+
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(0.35)]
+    [InlineData(0.55)]
+    [InlineData(0.75)]
+    [InlineData(1.0)]
+    public void GenerateRealizesExactlyBranchesAllowedByStableDetailThreshold(
+        double detail)
+    {
+        TreeGenerationSettings settings =
+            CreateSettings(
+                generationSeed: 44_444UL,
+                detail: detail);
+        TreeBranchSkeleton skeleton =
+            TreeBranchSkeletonPlanner.Create(
+                settings);
+        string[] expectedPaths =
+            skeleton.Branches
+                .Where(
+                    branch =>
+                        branch.RequiredDetail <= detail)
+                .Select(
+                    branch =>
+                        branch.Path)
+                .ToArray();
+
+        string[] actualPaths =
+            TreeGenerator.Generate(
+                settings)
+                .Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Branch)
+                .Select(
+                    part =>
+                        part.BranchPath!)
+                .ToArray();
+
+        Assert.Equal(
+            expectedPaths,
+            actualPaths);
+    }
+
+    [Fact]
     public void GenerateStoresGeneratorMetadataInWorldspawn()
     {
         TreeGenerationResult result =
@@ -1017,6 +1119,50 @@ public sealed class TreeGeneratorTests
 
         Assert.Equal("tree", generator);
         Assert.Equal("123456", seed);
+    }
+
+    private static GeneratedTreeBrush[] GetPrimaryBranchParts(
+        TreeGenerationResult result)
+    {
+        return result.Parts
+            .Where(
+                part =>
+                    part.Role == TreeBrushRole.Branch &&
+                    part.BranchPath is not null &&
+                    !part.BranchPath.Contains('/'))
+            .ToArray();
+    }
+
+    private static Bounds3d[] GetPrimaryBranchBounds(
+        TreeGenerationResult result)
+    {
+        return GetPrimaryBranchParts(result)
+            .Select(
+                part =>
+                    part.Bounds)
+            .ToArray();
+    }
+
+    private static string CreateRoleMapSignature(
+        TreeGenerationResult result,
+        TreeBrushRole role)
+    {
+        MapEntity worldspawn =
+            MapEntity.CreateWorldspawn(
+                result.Parts
+                    .Where(
+                        part =>
+                            part.Role == role)
+                    .Select(
+                        part =>
+                            part.Brush));
+        MapDocument document = new(
+        [
+            worldspawn
+        ]);
+
+        return Valve220MapWriter.Serialize(
+            document);
     }
 
     private static Bounds3d[] GetBranchBounds(

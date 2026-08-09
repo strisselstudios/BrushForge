@@ -104,8 +104,8 @@ public static class TreeGenerator
         TreeBranchSkeleton branchSkeleton =
             TreeBranchSkeletonPlanner.Create(
                 settings);
-        GeneratedTreeBrush[] primaryBranchParts =
-            PrimaryBranchGeometryGenerator.Generate(
+        GeneratedTreeBrush[] branchParts =
+            TreeBranchGeometryGenerator.Generate(
                 settings,
                 branchSkeleton,
                 origin,
@@ -114,7 +114,7 @@ public static class TreeGenerator
                 canopyWidthUnits * grid);
 
         parts.AddRange(
-            primaryBranchParts);
+            branchParts);
 
         DeterministicRandom random =
             new(settings.GenerationSeed);

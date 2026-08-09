@@ -12,7 +12,8 @@ public sealed record GeneratedTreeBrush
         TreeBrushRole role,
         int canopyLayerIndex,
         ConvexBrush brush,
-        Bounds3d bounds)
+        Bounds3d bounds,
+        string? branchPath = null)
     {
         if (!Enum.IsDefined(role)) {
             throw new ArgumentOutOfRangeException(
@@ -43,10 +44,20 @@ public sealed record GeneratedTreeBrush
                 "A canopy brush requires a non-negative layer index.");
         }
 
+        if (role == TreeBrushRole.Branch) {
+            ArgumentException.ThrowIfNullOrWhiteSpace(branchPath);
+        }
+        else if (branchPath is not null) {
+            throw new ArgumentException(
+                "Only branch brushes may carry a branch path.",
+                nameof(branchPath));
+        }
+
         Role = role;
         CanopyLayerIndex = canopyLayerIndex;
         Brush = brush;
         Bounds = bounds;
+        BranchPath = branchPath?.Trim();
     }
 
     public TreeBrushRole Role { get; }
@@ -56,4 +67,9 @@ public sealed record GeneratedTreeBrush
     public ConvexBrush Brush { get; }
 
     public Bounds3d Bounds { get; }
+
+    /// <summary>
+    /// Stable skeleton path for branch brushes; null for trunk and canopy.
+    /// </summary>
+    public string? BranchPath { get; }
 }

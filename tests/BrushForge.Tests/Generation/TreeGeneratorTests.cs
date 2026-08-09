@@ -425,7 +425,7 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
-    public void ChangingDetailPreservesTreeAndPartBounds()
+    public void ChangingDetailPreservesTreeAndCanopyBounds()
     {
         TreeGenerationResult minimum =
             TreeGenerator.Generate(
@@ -443,18 +443,92 @@ public sealed class TreeGeneratorTests
                         TrunkCrossSectionProfile.Octagonal,
                     detail: 1.0));
 
+        GeneratedTreeBrush[] minimumCanopy =
+            minimum.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+        GeneratedTreeBrush[] maximumCanopy =
+            maximum.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+
         Assert.Equal(
             maximum.Bounds,
             minimum.Bounds);
         Assert.Equal(
-            maximum.Parts.Count,
-            minimum.Parts.Count);
+            maximumCanopy.Length,
+            minimumCanopy.Length);
 
-        for (int index = 0; index < maximum.Parts.Count; index++) {
+        for (int index = 0; index < maximumCanopy.Length; index++) {
             Assert.Equal(
-                maximum.Parts[index].Bounds,
-                minimum.Parts[index].Bounds);
+                maximumCanopy[index].Bounds,
+                minimumCanopy[index].Bounds);
         }
+    }
+
+    [Theory]
+    [InlineData(0.0, 2)]
+    [InlineData(0.25, 3)]
+    [InlineData(0.50, 4)]
+    [InlineData(0.75, 5)]
+    [InlineData(1.0, 6)]
+    public void GenerateScalesRequestedTrunkSegmentsWithDetail(
+        double detail,
+        int expectedSegmentCount)
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount: 6,
+                    trunkIrregularity: 0.0,
+                    detail: detail));
+
+        int actualSegmentCount =
+            result.Parts.Count(
+                part =>
+                    part.Role == TreeBrushRole.Trunk);
+
+        Assert.Equal(
+            expectedSegmentCount,
+            actualSegmentCount);
+    }
+
+    [Fact]
+    public void DetailDoesNotIncreaseMinimumRequestedTrunkSegments()
+    {
+        TreeGenerationResult minimumDetail =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount:
+                        TreeGenerationSettings.MinimumTrunkSegmentCount,
+                    detail: 0.0));
+        TreeGenerationResult maximumDetail =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount:
+                        TreeGenerationSettings.MinimumTrunkSegmentCount,
+                    detail: 1.0));
+
+        Assert.Equal(
+            TreeGenerationSettings.MinimumTrunkSegmentCount,
+            minimumDetail.Parts.Count(
+                part =>
+                    part.Role == TreeBrushRole.Trunk));
+        Assert.Equal(
+            TreeGenerationSettings.MinimumTrunkSegmentCount,
+            maximumDetail.Parts.Count(
+                part =>
+                    part.Role == TreeBrushRole.Trunk));
     }
 
     [Theory]
@@ -472,7 +546,8 @@ public sealed class TreeGeneratorTests
                 generationSeed: 741UL,
                 trunkCrossSection:
                     TrunkCrossSectionProfile.Square,
-                trunkSegmentCount: 6,
+                trunkSegmentCount:
+                    TreeGenerationSettings.MinimumTrunkSegmentCount,
                 trunkIrregularity: 0.25,
                 trunkTwist: 1.0,
                 detail: detail);
@@ -481,7 +556,8 @@ public sealed class TreeGeneratorTests
                 generationSeed: 741UL,
                 trunkCrossSection:
                     TrunkCrossSectionProfile.Square,
-                trunkSegmentCount: 6,
+                trunkSegmentCount:
+                    TreeGenerationSettings.MinimumTrunkSegmentCount,
                 trunkIrregularity: expectedIrregularity,
                 trunkTwist: 1.0,
                 detail: 1.0);

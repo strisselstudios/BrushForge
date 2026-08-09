@@ -31,4 +31,27 @@ internal static class TreeDetailRealizationPolicy
 
         return settings.TrunkIrregularity * settings.Detail;
     }
+
+    public static int ResolveTrunkSegmentCount(
+        TreeGenerationSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        int minimumSegmentCount =
+            TreeGenerationSettings.MinimumTrunkSegmentCount;
+        int adjustableSegmentCount =
+            settings.TrunkSegmentCount -
+            minimumSegmentCount;
+        int realizedAdditionalSegments =
+            (int)Math.Round(
+                adjustableSegmentCount *
+                settings.Detail,
+                MidpointRounding.AwayFromZero);
+
+        return Math.Clamp(
+            minimumSegmentCount +
+            realizedAdditionalSegments,
+            minimumSegmentCount,
+            settings.TrunkSegmentCount);
+    }
 }

@@ -73,13 +73,16 @@ public static class TreeGenerator
         double trunkIrregularity =
             TreeDetailRealizationPolicy.ResolveTrunkIrregularity(
                 settings);
+        int trunkSegmentCount =
+            TreeDetailRealizationPolicy.ResolveTrunkSegmentCount(
+                settings);
 
         GeneratedTrunk trunk =
             TaperedTrunkGenerator.Generate(
                 origin,
                 trunkWidthUnits,
                 trunkTopUnits,
-                settings.TrunkSegmentCount,
+                trunkSegmentCount,
                 settings.TrunkTaper,
                 settings.TrunkLean,
                 settings.TrunkBend,

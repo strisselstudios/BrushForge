@@ -1,5 +1,6 @@
 using BrushForge.Core.Grid;
 using BrushForge.Core.Randomness;
+using BrushForge.Geometry.Bounds;
 using BrushForge.Geometry.Validation;
 using BrushForge.Geometry.Vectors;
 using BrushForge.Generation.Foliage;
@@ -425,7 +426,7 @@ public sealed class TreeGeneratorTests
     }
 
     [Fact]
-    public void ChangingDetailPreservesTreeAndCanopyBounds()
+    public void ChangingDetailPreservesTreeAndCanopyEnvelope()
     {
         TreeGenerationResult minimum =
             TreeGenerator.Generate(
@@ -443,31 +444,12 @@ public sealed class TreeGeneratorTests
                         TrunkCrossSectionProfile.Octagonal,
                     detail: 1.0));
 
-        GeneratedTreeBrush[] minimumCanopy =
-            minimum.Parts
-                .Where(
-                    part =>
-                        part.Role == TreeBrushRole.Canopy)
-                .ToArray();
-        GeneratedTreeBrush[] maximumCanopy =
-            maximum.Parts
-                .Where(
-                    part =>
-                        part.Role == TreeBrushRole.Canopy)
-                .ToArray();
-
         Assert.Equal(
             maximum.Bounds,
             minimum.Bounds);
         Assert.Equal(
-            maximumCanopy.Length,
-            minimumCanopy.Length);
-
-        for (int index = 0; index < maximumCanopy.Length; index++) {
-            Assert.Equal(
-                maximumCanopy[index].Bounds,
-                minimumCanopy[index].Bounds);
-        }
+            GetCanopyEnvelope(maximum),
+            GetCanopyEnvelope(minimum));
     }
 
     [Theory]
@@ -544,6 +526,7 @@ public sealed class TreeGeneratorTests
         TreeGenerationSettings actualSettings =
             CreateSettings(
                 generationSeed: 741UL,
+                canopyLayerCount: 1,
                 trunkCrossSection:
                     TrunkCrossSectionProfile.Square,
                 trunkSegmentCount:
@@ -554,6 +537,7 @@ public sealed class TreeGeneratorTests
         TreeGenerationSettings expectedSettings =
             CreateSettings(
                 generationSeed: 741UL,
+                canopyLayerCount: 1,
                 trunkCrossSection:
                     TrunkCrossSectionProfile.Square,
                 trunkSegmentCount:
@@ -585,6 +569,7 @@ public sealed class TreeGeneratorTests
             TreeGenerator.Generate(
                 CreateSettings(
                     generationSeed: 741UL,
+                    canopyLayerCount: 1,
                     trunkCrossSection:
                         TrunkCrossSectionProfile.Square,
                     trunkSegmentCount: 6,
@@ -595,6 +580,7 @@ public sealed class TreeGeneratorTests
             TreeGenerator.Generate(
                 CreateSettings(
                     generationSeed: 741UL,
+                    canopyLayerCount: 1,
                     trunkCrossSection:
                         TrunkCrossSectionProfile.Square,
                     trunkSegmentCount: 6,
@@ -643,6 +629,7 @@ public sealed class TreeGeneratorTests
         TreeGenerationSettings actualSettings =
             CreateSettings(
                 generationSeed: 741UL,
+                canopyLayerCount: 1,
                 trunkCrossSection:
                     TrunkCrossSectionProfile.Square,
                 trunkSegmentCount:
@@ -653,6 +640,7 @@ public sealed class TreeGeneratorTests
         TreeGenerationSettings expectedSettings =
             CreateSettings(
                 generationSeed: 741UL,
+                canopyLayerCount: 1,
                 trunkCrossSection:
                     TrunkCrossSectionProfile.Square,
                 trunkSegmentCount:
@@ -684,6 +672,7 @@ public sealed class TreeGeneratorTests
             TreeGenerator.Generate(
                 CreateSettings(
                     generationSeed: 741UL,
+                    canopyLayerCount: 1,
                     trunkCrossSection:
                         TrunkCrossSectionProfile.Square,
                     trunkSegmentCount:
@@ -695,6 +684,7 @@ public sealed class TreeGeneratorTests
             TreeGenerator.Generate(
                 CreateSettings(
                     generationSeed: 741UL,
+                    canopyLayerCount: 1,
                     trunkCrossSection:
                         TrunkCrossSectionProfile.Square,
                     trunkSegmentCount:
@@ -727,6 +717,122 @@ public sealed class TreeGeneratorTests
         }
     }
 
+    [Theory]
+    [InlineData(0.0, 1)]
+    [InlineData(0.25, 3)]
+    [InlineData(0.50, 5)]
+    [InlineData(0.75, 6)]
+    [InlineData(1.0, 8)]
+    public void GenerateScalesCanopyLayerComplexityWithDetail(
+        double detail,
+        int expectedLayerCount)
+    {
+        TreeGenerationResult result =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    canopyLayerCount: 8,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount:
+                        TreeGenerationSettings.MinimumTrunkSegmentCount,
+                    detail: detail));
+
+        GeneratedTreeBrush[] canopyParts =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+
+        Assert.Equal(
+            expectedLayerCount,
+            canopyParts.Length);
+
+        for (int index = 0; index < canopyParts.Length; index++) {
+            Assert.Equal(
+                index,
+                canopyParts[index].CanopyLayerIndex);
+        }
+    }
+
+    [Fact]
+    public void CanopyDetailDoesNotIncreaseSingleRequestedLayer()
+    {
+        TreeGenerationResult minimum =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    canopyLayerCount: 1,
+                    detail: 0.0));
+        TreeGenerationResult maximum =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    canopyLayerCount: 1,
+                    detail: 1.0));
+
+        Assert.Single(
+            minimum.Parts,
+            part =>
+                part.Role == TreeBrushRole.Canopy);
+        Assert.Single(
+            maximum.Parts,
+            part =>
+                part.Role == TreeBrushRole.Canopy);
+    }
+
+    [Fact]
+    public void ReducedCanopyDetailMergesFullDetailLayersWithoutRerolling()
+    {
+        TreeGenerationResult reduced =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 741UL,
+                    canopyLayerCount: 8,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount:
+                        TreeGenerationSettings.MinimumTrunkSegmentCount,
+                    detail: 0.40));
+        TreeGenerationResult full =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 741UL,
+                    canopyLayerCount: 8,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount:
+                        TreeGenerationSettings.MinimumTrunkSegmentCount,
+                    detail: 1.0));
+
+        GeneratedTreeBrush[] reducedCanopy =
+            reduced.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+        GeneratedTreeBrush[] fullCanopy =
+            full.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+
+        Assert.Equal(4, reducedCanopy.Length);
+        Assert.Equal(8, fullCanopy.Length);
+
+        for (int index = 0; index < reducedCanopy.Length; index++) {
+            Bounds3d expectedBounds =
+                fullCanopy[index * 2]
+                    .Bounds
+                    .Union(
+                        fullCanopy[(index * 2) + 1]
+                            .Bounds);
+
+            Assert.Equal(
+                expectedBounds,
+                reducedCanopy[index].Bounds);
+        }
+    }
+
     [Fact]
     public void GenerateStoresGeneratorMetadataInWorldspawn()
     {
@@ -751,6 +857,28 @@ public sealed class TreeGeneratorTests
 
         Assert.Equal("tree", generator);
         Assert.Equal("123456", seed);
+    }
+
+    private static Bounds3d GetCanopyEnvelope(
+        TreeGenerationResult result)
+    {
+        GeneratedTreeBrush[] canopy =
+            result.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+
+        Bounds3d envelope =
+            canopy[0].Bounds;
+
+        for (int index = 1; index < canopy.Length; index++) {
+            envelope =
+                envelope.Union(
+                    canopy[index].Bounds);
+        }
+
+        return envelope;
     }
 
     private static TreeGenerationSettings CreateSettings(

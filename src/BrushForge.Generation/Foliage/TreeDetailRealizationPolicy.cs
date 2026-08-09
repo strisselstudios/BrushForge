@@ -62,4 +62,27 @@ internal static class TreeDetailRealizationPolicy
             minimumSegmentCount,
             settings.TrunkSegmentCount);
     }
+
+    public static int ResolveCanopyLayerCount(
+        TreeGenerationSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        int minimumLayerCount =
+            TreeGenerationSettings.MinimumCanopyLayerCount;
+        int adjustableLayerCount =
+            settings.CanopyLayerCount -
+            minimumLayerCount;
+        int realizedAdditionalLayers =
+            (int)Math.Round(
+                adjustableLayerCount *
+                settings.Detail,
+                MidpointRounding.AwayFromZero);
+
+        return Math.Clamp(
+            minimumLayerCount +
+            realizedAdditionalLayers,
+            minimumLayerCount,
+            settings.CanopyLayerCount);
+    }
 }

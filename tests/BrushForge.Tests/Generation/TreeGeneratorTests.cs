@@ -1220,6 +1220,102 @@ public sealed class TreeGeneratorTests
             });
     }
 
+    [Theory]
+    [InlineData(0.32, 0.35)]
+    [InlineData(0.65, 0.70)]
+    public void GenerateKeepsSecondaryGeometryStableWhenParentSegmentationRefines(
+        double lowerDetail,
+        double higherDetail)
+    {
+        TreeGenerationSettings lowerSettings =
+            CreateSettings(
+                generationSeed: 44_444UL,
+                trunkCrossSection:
+                    TrunkCrossSectionProfile.Square,
+                trunkSegmentCount:
+                    TreeGenerationSettings.MinimumTrunkSegmentCount,
+                trunkIrregularity: 0.0,
+                trunkTwist: 0.0,
+                detail: lowerDetail);
+        TreeGenerationSettings higherSettings =
+            lowerSettings.WithDetail(
+                higherDetail);
+
+        Dictionary<string, GeneratedTreeBrush[]> lowerPaths =
+            GetSecondaryBranchParts(
+                TreeGenerator.Generate(
+                    lowerSettings))
+                .GroupBy(
+                    branch =>
+                        branch.BranchPath!,
+                    StringComparer.Ordinal)
+                .ToDictionary(
+                    path =>
+                        path.Key,
+                    path =>
+                        path
+                            .OrderBy(
+                                segment =>
+                                    segment.BranchSegmentIndex)
+                            .ToArray(),
+                    StringComparer.Ordinal);
+        Dictionary<string, GeneratedTreeBrush[]> higherPaths =
+            GetSecondaryBranchParts(
+                TreeGenerator.Generate(
+                    higherSettings))
+                .GroupBy(
+                    branch =>
+                        branch.BranchPath!,
+                    StringComparer.Ordinal)
+                .ToDictionary(
+                    path =>
+                        path.Key,
+                    path =>
+                        path
+                            .OrderBy(
+                                segment =>
+                                    segment.BranchSegmentIndex)
+                            .ToArray(),
+                    StringComparer.Ordinal);
+
+        string[] comparablePaths =
+            lowerPaths.Keys
+                .Where(
+                    path =>
+                        higherPaths.ContainsKey(path) &&
+                        lowerPaths[path].Length ==
+                        higherPaths[path].Length)
+                .ToArray();
+
+        Assert.NotEmpty(comparablePaths);
+        Assert.All(
+            comparablePaths,
+            path =>
+            {
+                GeneratedTreeBrush[] lowerSegments =
+                    lowerPaths[path];
+                GeneratedTreeBrush[] higherSegments =
+                    higherPaths[path];
+
+                Assert.Equal(
+                    lowerSegments.Length,
+                    higherSegments.Length);
+
+                for (
+                    int segmentIndex = 0;
+                    segmentIndex < lowerSegments.Length;
+                    segmentIndex++
+                ) {
+                    Assert.Equal(
+                        lowerSegments[segmentIndex].BranchSegmentIndex,
+                        higherSegments[segmentIndex].BranchSegmentIndex);
+                    Assert.Equal(
+                        lowerSegments[segmentIndex].Bounds,
+                        higherSegments[segmentIndex].Bounds);
+                }
+            });
+    }
+
     [Fact]
     public void GenerateBendsPrimaryBranchPathsAtFullDetail()
     {
@@ -1389,6 +1485,18 @@ public sealed class TreeGeneratorTests
                     part.Role == TreeBrushRole.Branch &&
                     part.BranchPath is not null &&
                     !part.BranchPath.Contains('/'))
+            .ToArray();
+    }
+
+    private static GeneratedTreeBrush[] GetSecondaryBranchParts(
+        TreeGenerationResult result)
+    {
+        return result.Parts
+            .Where(
+                part =>
+                    part.Role == TreeBrushRole.Branch &&
+                    part.BranchPath is not null &&
+                    part.BranchPath.Contains('/'))
             .ToArray();
     }
 

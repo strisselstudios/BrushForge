@@ -168,7 +168,7 @@ internal static class TreeBranchGeometryGenerator
 
         PathSample parentSample =
             SamplePath(
-                parent.Centers,
+                parent.MaximumDetailCenters,
                 branch.AttachmentFraction);
         double branchLength = Math.Max(
             grid * 2.0,
@@ -223,6 +223,7 @@ internal static class TreeBranchGeometryGenerator
                 realizedSegmentCount);
 
         return new ResolvedBranchGeometry(
+            maximumDetailPath,
             realizedPath,
             startHalfExtent,
             endHalfExtent,
@@ -248,9 +249,9 @@ internal static class TreeBranchGeometryGenerator
                 (segmentIndex + 1) /
                 (double)realizedSegmentCount;
             Vector3d startCenter =
-                geometry.Centers[segmentIndex];
+                geometry.RealizedCenters[segmentIndex];
             Vector3d endCenter =
-                geometry.Centers[segmentIndex + 1];
+                geometry.RealizedCenters[segmentIndex + 1];
             double startHalfExtent =
                 Interpolate(
                     geometry.StartHalfExtent,
@@ -564,7 +565,8 @@ internal static class TreeBranchGeometryGenerator
     }
 
     private sealed record ResolvedBranchGeometry(
-        Vector3d[] Centers,
+        Vector3d[] MaximumDetailCenters,
+        Vector3d[] RealizedCenters,
         double StartHalfExtent,
         double EndHalfExtent,
         double ChordLength);

@@ -549,7 +549,7 @@ public sealed class TreeGeneratorTests
                 trunkSegmentCount:
                     TreeGenerationSettings.MinimumTrunkSegmentCount,
                 trunkIrregularity: 0.25,
-                trunkTwist: 1.0,
+                trunkTwist: 0.0,
                 detail: detail);
         TreeGenerationSettings expectedSettings =
             CreateSettings(
@@ -559,7 +559,7 @@ public sealed class TreeGeneratorTests
                 trunkSegmentCount:
                     TreeGenerationSettings.MinimumTrunkSegmentCount,
                 trunkIrregularity: expectedIrregularity,
-                trunkTwist: 1.0,
+                trunkTwist: 0.0,
                 detail: 1.0);
 
         string actual =
@@ -598,6 +598,107 @@ public sealed class TreeGeneratorTests
                     trunkCrossSection:
                         TrunkCrossSectionProfile.Square,
                     trunkSegmentCount: 6,
+                    trunkIrregularity: 0.25,
+                    trunkTwist: 1.0,
+                    detail: 1.0));
+
+        GeneratedTreeBrush[] minimumCanopy =
+            minimum.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+        GeneratedTreeBrush[] maximumCanopy =
+            maximum.Parts
+                .Where(
+                    part =>
+                        part.Role == TreeBrushRole.Canopy)
+                .ToArray();
+
+        Assert.Equal(
+            maximumCanopy.Length,
+            minimumCanopy.Length);
+
+        for (int index = 0; index < maximumCanopy.Length; index++) {
+            Assert.Equal(
+                maximumCanopy[index].Bounds,
+                minimumCanopy[index].Bounds);
+        }
+    }
+
+    [Theory]
+    [InlineData(0.0, 0.0)]
+    [InlineData(0.25, 0.25)]
+    [InlineData(0.50, 0.50)]
+    [InlineData(0.75, 0.75)]
+    [InlineData(1.0, 1.0)]
+    public void GenerateScalesTrunkTwistContinuouslyWithDetail(
+        double detail,
+        double expectedTwist)
+    {
+        double expectedIrregularity =
+            0.25 *
+            detail;
+
+        TreeGenerationSettings actualSettings =
+            CreateSettings(
+                generationSeed: 741UL,
+                trunkCrossSection:
+                    TrunkCrossSectionProfile.Square,
+                trunkSegmentCount:
+                    TreeGenerationSettings.MinimumTrunkSegmentCount,
+                trunkIrregularity: 0.25,
+                trunkTwist: 1.0,
+                detail: detail);
+        TreeGenerationSettings expectedSettings =
+            CreateSettings(
+                generationSeed: 741UL,
+                trunkCrossSection:
+                    TrunkCrossSectionProfile.Square,
+                trunkSegmentCount:
+                    TreeGenerationSettings.MinimumTrunkSegmentCount,
+                trunkIrregularity: expectedIrregularity,
+                trunkTwist: expectedTwist,
+                detail: 1.0);
+
+        string actual =
+            Valve220MapWriter.Serialize(
+                TreeGenerator.Generate(
+                    actualSettings)
+                    .Document);
+        string expected =
+            Valve220MapWriter.Serialize(
+                TreeGenerator.Generate(
+                    expectedSettings)
+                    .Document);
+
+        Assert.Equal(
+            expected,
+            actual);
+    }
+
+    [Fact]
+    public void ChangingTwistDetailPreservesCanopyPlacement()
+    {
+        TreeGenerationResult minimum =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 741UL,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount:
+                        TreeGenerationSettings.MinimumTrunkSegmentCount,
+                    trunkIrregularity: 0.25,
+                    trunkTwist: 1.0,
+                    detail: 0.0));
+        TreeGenerationResult maximum =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    generationSeed: 741UL,
+                    trunkCrossSection:
+                        TrunkCrossSectionProfile.Square,
+                    trunkSegmentCount:
+                        TreeGenerationSettings.MinimumTrunkSegmentCount,
                     trunkIrregularity: 0.25,
                     trunkTwist: 1.0,
                     detail: 1.0));

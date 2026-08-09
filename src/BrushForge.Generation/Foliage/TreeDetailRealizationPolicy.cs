@@ -32,6 +32,14 @@ internal static class TreeDetailRealizationPolicy
         return settings.TrunkIrregularity * settings.Detail;
     }
 
+    public static double ResolveTrunkTwist(
+        TreeGenerationSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        return settings.TrunkTwist * settings.Detail;
+    }
+
     public static int ResolveTrunkSegmentCount(
         TreeGenerationSettings settings)
     {

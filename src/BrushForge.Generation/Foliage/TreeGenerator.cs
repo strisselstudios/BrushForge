@@ -73,6 +73,9 @@ public static class TreeGenerator
         double trunkIrregularity =
             TreeDetailRealizationPolicy.ResolveTrunkIrregularity(
                 settings);
+        double trunkTwist =
+            TreeDetailRealizationPolicy.ResolveTrunkTwist(
+                settings);
         int trunkSegmentCount =
             TreeDetailRealizationPolicy.ResolveTrunkSegmentCount(
                 settings);
@@ -89,7 +92,7 @@ public static class TreeGenerator
                 settings.TrunkBaseFlare,
                 trunkCrossSection,
                 trunkIrregularity,
-                settings.TrunkTwist,
+                trunkTwist,
                 settings.GenerationSeed,
                 grid,
                 settings.TrunkTextureName);

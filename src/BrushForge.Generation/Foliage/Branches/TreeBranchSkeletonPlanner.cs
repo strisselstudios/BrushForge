@@ -13,11 +13,14 @@ public static class TreeBranchSkeletonPlanner
     public const int PrimaryBranchCount = 5;
     public const int SecondaryBranchesPerPrimary = 2;
     public const int TertiaryBranchesPerSecondary = 2;
+    public const int TerminalBranchletsPerTertiary = 2;
 
     private const ulong BranchRandomSalt =
         0x4252414E43484647UL;
     private const ulong TertiaryBranchRandomSalt =
         0x5445525449415259UL;
+    private const ulong TerminalBranchletRandomSalt =
+        0x4252414E43484C54UL;
     private const double LowerSecondaryAttachmentMinimum = 0.46;
     private const double LowerSecondaryAttachmentMaximum = 0.62;
     private const double UpperSecondaryAttachmentMinimum = 0.70;
@@ -38,6 +41,20 @@ public static class TreeBranchSkeletonPlanner
     private const double LowerTertiaryRequiredDetailMaximum = 0.92;
     private const double UpperTertiaryRequiredDetailMinimum = 0.92;
     private const double UpperTertiaryRequiredDetailMaximum = 0.98;
+    private const double LowerTerminalAttachmentMinimum = 0.58;
+    private const double LowerTerminalAttachmentMaximum = 0.72;
+    private const double UpperTerminalAttachmentMinimum = 0.78;
+    private const double UpperTerminalAttachmentMaximum = 0.92;
+    private const double TerminalAzimuthMinimumMagnitude = 48.0;
+    private const double TerminalAzimuthMaximumMagnitude = 88.0;
+    private const double TerminalDeflectionMinimum = 22.0;
+    private const double TerminalDeflectionMaximum = 44.0;
+    private const double LowerTerminalRequiredDetailMinimum = 0.94;
+    private const double LowerTerminalRequiredDetailMaximum = 0.975;
+    private const double UpperTerminalRequiredDetailMinimum = 0.975;
+    private const double UpperTerminalRequiredDetailMaximum = 0.995;
+    private const double TerminalRequiredDetailParentMargin = 0.01;
+    private const double MaximumTerminalRequiredDetail = 0.999;
 
     public static TreeBranchSkeleton Create(
         TreeGenerationSettings settings)
@@ -55,11 +72,15 @@ public static class TreeBranchSkeletonPlanner
         int tertiaryCount =
             secondaryCount *
             TertiaryBranchesPerSecondary;
+        int terminalBranchletCount =
+            tertiaryCount *
+            TerminalBranchletsPerTertiary;
         List<PlannedTreeBranch> branches =
             new(
                 PrimaryBranchCount +
                 secondaryCount +
-                tertiaryCount);
+                tertiaryCount +
+                terminalBranchletCount);
 
         for (
             int primaryIndex = 0;
@@ -186,6 +207,62 @@ public static class TreeBranchSkeletonPlanner
             }
         }
 
+        PlannedTreeBranch[] tertiaryBranches =
+            branches
+                .Where(
+                    branch =>
+                        branch.Depth == 2)
+                .ToArray();
+
+        foreach (PlannedTreeBranch tertiary in tertiaryBranches) {
+            for (
+                int branchletIndex = 0;
+                branchletIndex < TerminalBranchletsPerTertiary;
+                branchletIndex++
+            ) {
+                string branchletPath =
+                    CreateTerminalBranchletPath(
+                        tertiary.Path,
+                        branchletIndex);
+                DeterministicRandom branchletRandom =
+                    CreateTerminalBranchletRandom(
+                        settings.GenerationSeed,
+                        branchletPath);
+                double branchletStartRadiusScale =
+                    branchletRandom.NextDouble(0.30, 0.46);
+
+                branches.Add(
+                    new PlannedTreeBranch(
+                        branchletPath,
+                        tertiary.Path,
+                        depth: 3,
+                        attachmentFraction:
+                            CreateTerminalAttachmentFraction(
+                                branchletRandom,
+                                branchletIndex),
+                        azimuthDegrees:
+                            CreateTerminalAzimuthDegrees(
+                                branchletRandom,
+                                branchletIndex),
+                        elevationDegrees:
+                            branchletRandom.NextDouble(
+                                TerminalDeflectionMinimum,
+                                TerminalDeflectionMaximum),
+                        lengthScale:
+                            branchletRandom.NextDouble(0.22, 0.38),
+                        startRadiusScale:
+                            branchletStartRadiusScale,
+                        endRadiusScale:
+                            branchletStartRadiusScale *
+                            branchletRandom.NextDouble(0.28, 0.48),
+                        requiredDetail:
+                            CreateTerminalRequiredDetail(
+                                branchletRandom,
+                                branchletIndex,
+                                tertiary.RequiredDetail)));
+            }
+        }
+
         return new TreeBranchSkeleton(branches);
     }
 
@@ -301,6 +378,90 @@ public static class TreeBranchSkeletonPlanner
         };
     }
 
+    private static DeterministicRandom CreateTerminalBranchletRandom(
+        GenerationSeed treeSeed,
+        string branchletPath)
+    {
+        GenerationSeed pathSeed =
+            GenerationSeed.FromText(
+                branchletPath);
+
+        return new DeterministicRandom(
+            new GenerationSeed(
+                treeSeed.Value ^
+                TerminalBranchletRandomSalt ^
+                pathSeed.Value));
+    }
+
+    private static double CreateTerminalAttachmentFraction(
+        DeterministicRandom random,
+        int branchletIndex)
+    {
+        return branchletIndex switch
+        {
+            0 => random.NextDouble(
+                LowerTerminalAttachmentMinimum,
+                LowerTerminalAttachmentMaximum),
+            1 => random.NextDouble(
+                UpperTerminalAttachmentMinimum,
+                UpperTerminalAttachmentMaximum),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(branchletIndex),
+                branchletIndex,
+                "The current generic tree archetype defines exactly two terminal branchlets per tertiary branch.")
+        };
+    }
+
+    private static double CreateTerminalAzimuthDegrees(
+        DeterministicRandom random,
+        int branchletIndex)
+    {
+        double magnitude =
+            random.NextDouble(
+                TerminalAzimuthMinimumMagnitude,
+                TerminalAzimuthMaximumMagnitude);
+
+        return branchletIndex switch
+        {
+            0 => -magnitude,
+            1 => magnitude,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(branchletIndex),
+                branchletIndex,
+                "The current generic tree archetype defines exactly two terminal branchlets per tertiary branch.")
+        };
+    }
+
+    private static double CreateTerminalRequiredDetail(
+        DeterministicRandom random,
+        int branchletIndex,
+        double parentRequiredDetail)
+    {
+        double sampledDetail =
+            branchletIndex switch
+            {
+                0 => random.NextDouble(
+                    LowerTerminalRequiredDetailMinimum,
+                    LowerTerminalRequiredDetailMaximum),
+                1 => random.NextDouble(
+                    UpperTerminalRequiredDetailMinimum,
+                    UpperTerminalRequiredDetailMaximum),
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(branchletIndex),
+                    branchletIndex,
+                    "The current generic tree archetype defines exactly two terminal branchlets per tertiary branch.")
+            };
+        double minimumDetail =
+            Math.Min(
+                MaximumTerminalRequiredDetail,
+                parentRequiredDetail +
+                TerminalRequiredDetailParentMargin);
+
+        return Math.Max(
+            sampledDetail,
+            minimumDetail);
+    }
+
     private static string CreatePrimaryPath(
         int primaryIndex)
     {
@@ -328,6 +489,17 @@ public static class TreeBranchSkeletonPlanner
         return string.Concat(
             parentPath,
             "/T",
+            childIndex.ToString(
+                CultureInfo.InvariantCulture));
+    }
+
+    private static string CreateTerminalBranchletPath(
+        string parentPath,
+        int childIndex)
+    {
+        return string.Concat(
+            parentPath,
+            "/B",
             childIndex.ToString(
                 CultureInfo.InvariantCulture));
     }

@@ -65,7 +65,7 @@ public sealed class TreeBranchSkeletonPlannerTests
     }
 
     [Fact]
-    public void CreateBuildsExpectedPrimarySecondaryAndTertiaryHierarchy()
+    public void CreateBuildsExpectedPrimarySecondaryTertiaryAndTerminalHierarchy()
     {
         TreeBranchSkeleton skeleton =
             TreeBranchSkeletonPlanner.Create(
@@ -79,13 +79,17 @@ public sealed class TreeBranchSkeletonPlannerTests
         int tertiaryCount =
             secondaryCount *
             TreeBranchSkeletonPlanner.TertiaryBranchesPerSecondary;
+        int terminalBranchletCount =
+            tertiaryCount *
+            TreeBranchSkeletonPlanner.TerminalBranchletsPerTertiary;
         int expectedCount =
             TreeBranchSkeletonPlanner.PrimaryBranchCount +
             secondaryCount +
-            tertiaryCount;
+            tertiaryCount +
+            terminalBranchletCount;
 
         Assert.Equal(expectedCount, skeleton.Count);
-        Assert.Equal(2, skeleton.MaximumDepth);
+        Assert.Equal(3, skeleton.MaximumDepth);
         Assert.Equal(
             TreeBranchSkeletonPlanner.PrimaryBranchCount,
             skeleton.Branches.Count(
@@ -101,6 +105,11 @@ public sealed class TreeBranchSkeletonPlannerTests
             skeleton.Branches.Count(
                 branch =>
                     branch.Depth == 2));
+        Assert.Equal(
+            terminalBranchletCount,
+            skeleton.Branches.Count(
+                branch =>
+                    branch.Depth == 3));
     }
 
     [Fact]
@@ -432,6 +441,149 @@ public sealed class TreeBranchSkeletonPlannerTests
                 upperChild.RequiredDetail,
                 0.92,
                 Math.BitDecrement(0.98));
+        }
+    }
+
+    [Fact]
+    public void CreateAssignsTwoTerminalBranchletsToEveryTertiaryBranch()
+    {
+        TreeBranchSkeleton skeleton =
+            TreeBranchSkeletonPlanner.Create(
+                CreateSettings(
+                    seedValue: 73_951UL,
+                    detail: 1.0));
+
+        foreach (
+            PlannedTreeBranch tertiary in
+            skeleton.Branches.Where(
+                branch =>
+                    branch.Depth == 2)
+        ) {
+            PlannedTreeBranch[] children =
+                skeleton.Branches
+                    .Where(
+                        branch =>
+                            string.Equals(
+                                branch.ParentPath,
+                                tertiary.Path,
+                                StringComparison.Ordinal))
+                    .OrderBy(
+                        branch =>
+                            branch.Path,
+                        StringComparer.Ordinal)
+                    .ToArray();
+
+            Assert.Equal(
+                TreeBranchSkeletonPlanner.TerminalBranchletsPerTertiary,
+                children.Length);
+            Assert.All(
+                children,
+                child =>
+                    Assert.Equal(3, child.Depth));
+            Assert.EndsWith(
+                "/B0",
+                children[0].Path,
+                StringComparison.Ordinal);
+            Assert.EndsWith(
+                "/B1",
+                children[1].Path,
+                StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void CreateKeepsTerminalBranchletDetailThresholdAboveItsParent()
+    {
+        TreeBranchSkeleton skeleton =
+            TreeBranchSkeletonPlanner.Create(
+                CreateSettings(
+                    seedValue: 82_614UL,
+                    detail: 1.0));
+        Dictionary<string, PlannedTreeBranch> branchesByPath =
+            skeleton.Branches
+                .ToDictionary(
+                    branch =>
+                        branch.Path,
+                    StringComparer.Ordinal);
+
+        Assert.All(
+            skeleton.Branches.Where(
+                branch =>
+                    branch.Depth == 3),
+            branch =>
+            {
+                PlannedTreeBranch parent =
+                    branchesByPath[branch.ParentPath!];
+
+                Assert.True(
+                    branch.RequiredDetail >
+                    parent.RequiredDetail);
+                Assert.InRange(
+                    branch.RequiredDetail,
+                    0.94,
+                    Math.BitDecrement(1.0));
+            });
+    }
+
+    [Fact]
+    public void CreateSeparatesTerminalBranchletSiblingAttachmentsAndSides()
+    {
+        TreeBranchSkeleton skeleton =
+            TreeBranchSkeletonPlanner.Create(
+                CreateSettings(
+                    seedValue: 31_407UL,
+                    detail: 1.0));
+
+        foreach (
+            PlannedTreeBranch tertiary in
+            skeleton.Branches.Where(
+                branch =>
+                    branch.Depth == 2)
+        ) {
+            PlannedTreeBranch lowerChild =
+                Assert.Single(
+                    skeleton.Branches,
+                    branch =>
+                        branch.ParentPath == tertiary.Path &&
+                        branch.Path.EndsWith(
+                            "/B0",
+                            StringComparison.Ordinal));
+            PlannedTreeBranch upperChild =
+                Assert.Single(
+                    skeleton.Branches,
+                    branch =>
+                        branch.ParentPath == tertiary.Path &&
+                        branch.Path.EndsWith(
+                            "/B1",
+                            StringComparison.Ordinal));
+
+            Assert.InRange(
+                lowerChild.AttachmentFraction,
+                0.58,
+                Math.BitDecrement(0.72));
+            Assert.InRange(
+                upperChild.AttachmentFraction,
+                0.78,
+                Math.BitDecrement(0.92));
+            Assert.True(
+                upperChild.AttachmentFraction >
+                lowerChild.AttachmentFraction);
+            Assert.InRange(
+                lowerChild.AzimuthDegrees,
+                -88.0,
+                -48.0);
+            Assert.InRange(
+                upperChild.AzimuthDegrees,
+                48.0,
+                88.0);
+            Assert.InRange(
+                lowerChild.ElevationDegrees,
+                22.0,
+                Math.BitDecrement(44.0));
+            Assert.InRange(
+                upperChild.ElevationDegrees,
+                22.0,
+                Math.BitDecrement(44.0));
         }
     }
 

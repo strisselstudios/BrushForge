@@ -27,8 +27,11 @@ internal static class TreeBranchGeometryGenerator
     private const double ChildLengthExtension = 1.15;
     private const double MinimumPrimarySlenderness = 3.0;
     private const double MinimumChildSlenderness = 3.0;
+    private const double TerminalLengthExtension = 0.95;
+    private const double MinimumTerminalSlenderness = 2.5;
     private const double MaximumPrimaryCanopyLengthFraction = 0.85;
     private const double MaximumChildParentLengthFraction = 0.85;
+    private const double MaximumTerminalParentLengthFraction = 0.60;
     private const double MaximumJunctionInsetFraction = 0.55;
     private const double MaximumParentInsetFraction = 0.18;
     private const double ReferenceCanopyWidthToTreeHeightRatio = 0.75;
@@ -261,6 +264,10 @@ internal static class TreeBranchGeometryGenerator
         double grid,
         int branchDepth)
     {
+        if (branchDepth >= 3) {
+            return grid / 16.0;
+        }
+
         return branchDepth >= 2
             ? grid / 8.0
             : grid / 4.0;
@@ -335,7 +342,7 @@ internal static class TreeBranchGeometryGenerator
             canopyDrivenLength,
             slendernessDrivenLength,
             maximumLength,
-            grid);
+            grid * 2.0);
     }
 
     private static double ResolveChildBranchLength(
@@ -344,6 +351,28 @@ internal static class TreeBranchGeometryGenerator
         double startHalfExtent,
         double grid)
     {
+        if (branch.Depth >= 3) {
+            double terminalStructuralLength =
+                parentChordLength *
+                branch.LengthScale *
+                TerminalLengthExtension;
+            double terminalSlendernessLength =
+                startHalfExtent *
+                2.0 *
+                MinimumTerminalSlenderness;
+            double terminalMaximumLength =
+                Math.Max(
+                    grid,
+                    parentChordLength *
+                    MaximumTerminalParentLengthFraction);
+
+            return ResolveBoundedBranchLength(
+                terminalStructuralLength,
+                terminalSlendernessLength,
+                terminalMaximumLength,
+                grid * 0.75);
+        }
+
         double parentDrivenLength =
             parentChordLength *
             branch.LengthScale *
@@ -362,17 +391,15 @@ internal static class TreeBranchGeometryGenerator
             parentDrivenLength,
             slendernessDrivenLength,
             maximumLength,
-            grid);
+            grid * 2.0);
     }
 
     private static double ResolveBoundedBranchLength(
         double structuralLength,
         double slendernessLength,
         double maximumLength,
-        double grid)
+        double minimumLength)
     {
-        double minimumLength =
-            grid * 2.0;
         double desiredLength =
             Math.Max(
                 minimumLength,
@@ -532,13 +559,19 @@ internal static class TreeBranchGeometryGenerator
         }
 
         double maximumBendFraction =
-            branch.Depth == 0
-                ? PrimaryMaximumBendFraction
-                : ChildMaximumBendFraction;
+            branch.Depth switch
+            {
+                0 => PrimaryMaximumBendFraction,
+                >= 3 => 0.10,
+                _ => ChildMaximumBendFraction
+            };
         double secondaryBendFraction =
-            branch.Depth == 0
-                ? PrimarySecondaryBendFraction
-                : ChildSecondaryBendFraction;
+            branch.Depth switch
+            {
+                0 => PrimarySecondaryBendFraction,
+                >= 3 => 0.025,
+                _ => ChildSecondaryBendFraction
+            };
         Vector3d secondaryBendDirection =
             branch.Depth >= 2 &&
             childOutwardDirection is Vector3d tertiaryOutwardDirection

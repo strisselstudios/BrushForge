@@ -367,7 +367,7 @@ public sealed class BranchAttachmentIntegrationTests
                     childHalfExtent) -
                 CoordinateTolerance);
 
-            if (child.Depth == 2) {
+            if (child.Depth >= 2) {
                 Assert.True(
                     childHalfExtent <
                     parentHalfExtent);

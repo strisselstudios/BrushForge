@@ -78,10 +78,11 @@ internal static class TreeDetailRealizationPolicy
             0 => 8,
             1 => 6,
             2 => 4,
+            3 => 2,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(branch),
                 branch.Depth,
-                "The current foliage hierarchy supports branch depths zero through two.")
+                "The current foliage hierarchy supports branch depths zero through three.")
         };
     }
 

@@ -12,9 +12,12 @@ public static class TreeBranchSkeletonPlanner
 {
     public const int PrimaryBranchCount = 5;
     public const int SecondaryBranchesPerPrimary = 2;
+    public const int TertiaryBranchesPerSecondary = 2;
 
     private const ulong BranchRandomSalt =
         0x4252414E43484647UL;
+    private const ulong TertiaryBranchRandomSalt =
+        0x5445525449415259UL;
     private const double LowerSecondaryAttachmentMinimum = 0.46;
     private const double LowerSecondaryAttachmentMaximum = 0.62;
     private const double UpperSecondaryAttachmentMinimum = 0.70;
@@ -23,6 +26,18 @@ public static class TreeBranchSkeletonPlanner
     private const double SecondaryAzimuthMaximumMagnitude = 78.0;
     private const double SecondaryDeflectionMinimum = 18.0;
     private const double SecondaryDeflectionMaximum = 44.0;
+    private const double LowerTertiaryAttachmentMinimum = 0.42;
+    private const double LowerTertiaryAttachmentMaximum = 0.58;
+    private const double UpperTertiaryAttachmentMinimum = 0.66;
+    private const double UpperTertiaryAttachmentMaximum = 0.82;
+    private const double TertiaryAzimuthMinimumMagnitude = 42.0;
+    private const double TertiaryAzimuthMaximumMagnitude = 82.0;
+    private const double TertiaryDeflectionMinimum = 20.0;
+    private const double TertiaryDeflectionMaximum = 46.0;
+    private const double LowerTertiaryRequiredDetailMinimum = 0.85;
+    private const double LowerTertiaryRequiredDetailMaximum = 0.92;
+    private const double UpperTertiaryRequiredDetailMinimum = 0.92;
+    private const double UpperTertiaryRequiredDetailMaximum = 0.98;
 
     public static TreeBranchSkeleton Create(
         TreeGenerationSettings settings)
@@ -34,10 +49,17 @@ public static class TreeBranchSkeletonPlanner
                 new GenerationSeed(
                     settings.GenerationSeed.Value ^
                     BranchRandomSalt));
+        int secondaryCount =
+            PrimaryBranchCount *
+            SecondaryBranchesPerPrimary;
+        int tertiaryCount =
+            secondaryCount *
+            TertiaryBranchesPerSecondary;
         List<PlannedTreeBranch> branches =
             new(
-                PrimaryBranchCount *
-                (SecondaryBranchesPerPrimary + 1));
+                PrimaryBranchCount +
+                secondaryCount +
+                tertiaryCount);
 
         for (
             int primaryIndex = 0;
@@ -109,6 +131,61 @@ public static class TreeBranchSkeletonPlanner
             }
         }
 
+        PlannedTreeBranch[] secondaryBranches =
+            branches
+                .Where(
+                    branch =>
+                        branch.Depth == 1)
+                .ToArray();
+
+        foreach (PlannedTreeBranch secondary in secondaryBranches) {
+            for (
+                int tertiaryIndex = 0;
+                tertiaryIndex < TertiaryBranchesPerSecondary;
+                tertiaryIndex++
+            ) {
+                string tertiaryPath =
+                    CreateTertiaryPath(
+                        secondary.Path,
+                        tertiaryIndex);
+                DeterministicRandom tertiaryRandom =
+                    CreateTertiaryRandom(
+                        settings.GenerationSeed,
+                        tertiaryPath);
+                double tertiaryStartRadiusScale =
+                    tertiaryRandom.NextDouble(0.38, 0.58);
+
+                branches.Add(
+                    new PlannedTreeBranch(
+                        tertiaryPath,
+                        secondary.Path,
+                        depth: 2,
+                        attachmentFraction:
+                            CreateTertiaryAttachmentFraction(
+                                tertiaryRandom,
+                                tertiaryIndex),
+                        azimuthDegrees:
+                            CreateTertiaryAzimuthDegrees(
+                                tertiaryRandom,
+                                tertiaryIndex),
+                        elevationDegrees:
+                            tertiaryRandom.NextDouble(
+                                TertiaryDeflectionMinimum,
+                                TertiaryDeflectionMaximum),
+                        lengthScale:
+                            tertiaryRandom.NextDouble(0.32, 0.52),
+                        startRadiusScale:
+                            tertiaryStartRadiusScale,
+                        endRadiusScale:
+                            tertiaryStartRadiusScale *
+                            tertiaryRandom.NextDouble(0.35, 0.55),
+                        requiredDetail:
+                            CreateTertiaryRequiredDetail(
+                                tertiaryRandom,
+                                tertiaryIndex)));
+            }
+        }
+
         return new TreeBranchSkeleton(branches);
     }
 
@@ -151,6 +228,79 @@ public static class TreeBranchSkeletonPlanner
         };
     }
 
+    private static DeterministicRandom CreateTertiaryRandom(
+        GenerationSeed treeSeed,
+        string tertiaryPath)
+    {
+        GenerationSeed pathSeed =
+            GenerationSeed.FromText(
+                tertiaryPath);
+
+        return new DeterministicRandom(
+            new GenerationSeed(
+                treeSeed.Value ^
+                TertiaryBranchRandomSalt ^
+                pathSeed.Value));
+    }
+
+    private static double CreateTertiaryAttachmentFraction(
+        DeterministicRandom random,
+        int tertiaryIndex)
+    {
+        return tertiaryIndex switch
+        {
+            0 => random.NextDouble(
+                LowerTertiaryAttachmentMinimum,
+                LowerTertiaryAttachmentMaximum),
+            1 => random.NextDouble(
+                UpperTertiaryAttachmentMinimum,
+                UpperTertiaryAttachmentMaximum),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(tertiaryIndex),
+                tertiaryIndex,
+                "The current generic tree archetype defines exactly two tertiary branches per secondary branch.")
+        };
+    }
+
+    private static double CreateTertiaryAzimuthDegrees(
+        DeterministicRandom random,
+        int tertiaryIndex)
+    {
+        double magnitude =
+            random.NextDouble(
+                TertiaryAzimuthMinimumMagnitude,
+                TertiaryAzimuthMaximumMagnitude);
+
+        return tertiaryIndex switch
+        {
+            0 => -magnitude,
+            1 => magnitude,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(tertiaryIndex),
+                tertiaryIndex,
+                "The current generic tree archetype defines exactly two tertiary branches per secondary branch.")
+        };
+    }
+
+    private static double CreateTertiaryRequiredDetail(
+        DeterministicRandom random,
+        int tertiaryIndex)
+    {
+        return tertiaryIndex switch
+        {
+            0 => random.NextDouble(
+                LowerTertiaryRequiredDetailMinimum,
+                LowerTertiaryRequiredDetailMaximum),
+            1 => random.NextDouble(
+                UpperTertiaryRequiredDetailMinimum,
+                UpperTertiaryRequiredDetailMaximum),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(tertiaryIndex),
+                tertiaryIndex,
+                "The current generic tree archetype defines exactly two tertiary branches per secondary branch.")
+        };
+    }
+
     private static string CreatePrimaryPath(
         int primaryIndex)
     {
@@ -167,6 +317,17 @@ public static class TreeBranchSkeletonPlanner
         return string.Concat(
             parentPath,
             "/S",
+            childIndex.ToString(
+                CultureInfo.InvariantCulture));
+    }
+
+    private static string CreateTertiaryPath(
+        string parentPath,
+        int childIndex)
+    {
+        return string.Concat(
+            parentPath,
+            "/T",
             childIndex.ToString(
                 CultureInfo.InvariantCulture));
     }

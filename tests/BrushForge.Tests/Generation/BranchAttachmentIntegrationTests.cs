@@ -249,7 +249,7 @@ public sealed class BranchAttachmentIntegrationTests
     }
 
     [Fact]
-    public void GenerateEmbedsSecondaryBranchRootsNearParentBranchSurface()
+    public void GenerateEmbedsChildBranchRootsNearParentBranchSurface()
     {
         TreeGenerationSettings settings =
             CreateSettings(
@@ -270,7 +270,7 @@ public sealed class BranchAttachmentIntegrationTests
             PlannedTreeBranch child in
             skeleton.Branches.Where(
                 branch =>
-                    branch.Depth == 1)
+                    branch.Depth > 0)
         ) {
             GeneratedTreeBrush childRoot =
                 result.Parts.Single(
@@ -366,6 +366,12 @@ public sealed class BranchAttachmentIntegrationTests
                     parentHalfExtent -
                     childHalfExtent) -
                 CoordinateTolerance);
+
+            if (child.Depth == 2) {
+                Assert.True(
+                    childHalfExtent <
+                    parentHalfExtent);
+            }
         }
     }
 

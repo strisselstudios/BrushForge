@@ -54,9 +54,6 @@ internal static class TreeBranchGeometryGenerator
                 StringComparer.Ordinal);
         List<GeneratedTreeBrush> realizedParts =
             new(skeleton.Count * 2);
-        double minimumHalfExtent =
-            settings.GridSpacing.Units /
-            4.0;
         double canopyReachWidth =
             ResolveCanopyReachWidth(
                 realizedCanopyWidth,
@@ -75,6 +72,10 @@ internal static class TreeBranchGeometryGenerator
                 TreeDetailRealizationPolicy.ResolveBranchSideCount(
                     settings,
                     branch);
+            double minimumHalfExtent =
+                ResolveMinimumBranchHalfExtent(
+                    settings.GridSpacing.Units,
+                    branch.Depth);
             ResolvedBranchGeometry geometry =
                 branch.Depth == 0
                     ? ResolvePrimaryBranch(
@@ -254,6 +255,15 @@ internal static class TreeBranchGeometryGenerator
             realizedSegmentCount,
             crossSectionSideCount,
             outwardDirection);
+    }
+
+    private static double ResolveMinimumBranchHalfExtent(
+        double grid,
+        int branchDepth)
+    {
+        return branchDepth >= 2
+            ? grid / 8.0
+            : grid / 4.0;
     }
 
     private static double ResolveCanopyReachWidth(
@@ -530,10 +540,13 @@ internal static class TreeBranchGeometryGenerator
                 ? PrimarySecondaryBendFraction
                 : ChildSecondaryBendFraction;
         Vector3d secondaryBendDirection =
-            Vector3d.Cross(
-                axis,
-                bendDirection)
-                .Normalize();
+            branch.Depth >= 2 &&
+            childOutwardDirection is Vector3d tertiaryOutwardDirection
+                ? tertiaryOutwardDirection
+                : Vector3d.Cross(
+                    axis,
+                    bendDirection)
+                    .Normalize();
 
         for (
             int pointIndex = 1;

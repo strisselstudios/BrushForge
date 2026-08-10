@@ -73,9 +73,16 @@ internal static class TreeDetailRealizationPolicy
     {
         ArgumentNullException.ThrowIfNull(branch);
 
-        return branch.Depth == 0
-            ? 8
-            : 6;
+        return branch.Depth switch
+        {
+            0 => 8,
+            1 => 6,
+            2 => 4,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(branch),
+                branch.Depth,
+                "The current foliage hierarchy supports branch depths zero through two.")
+        };
     }
 
     public static int ResolveBranchSideCount(

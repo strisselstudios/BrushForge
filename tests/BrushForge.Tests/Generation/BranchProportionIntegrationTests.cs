@@ -251,7 +251,12 @@ public sealed class BranchProportionIntegrationTests
                     (
                         primary
                             ? !part.BranchPath.Contains('/')
-                            : part.BranchPath.Contains('/')
+                            : part.BranchPath.Contains(
+                                "/S",
+                                StringComparison.Ordinal) &&
+                              !part.BranchPath.Contains(
+                                  "/T",
+                                  StringComparison.Ordinal)
                     ))
             .GroupBy(
                 part =>

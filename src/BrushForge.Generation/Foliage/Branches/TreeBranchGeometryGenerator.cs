@@ -31,6 +31,8 @@ internal static class TreeBranchGeometryGenerator
     private const double MaximumChildParentLengthFraction = 0.85;
     private const double MaximumJunctionInsetFraction = 0.55;
     private const double MaximumParentInsetFraction = 0.18;
+    private const double ReferenceCanopyWidthToTreeHeightRatio = 0.75;
+    private const double MaximumOversizedCanopyReachScale = 1.50;
 
     public static GeneratedTreeBrush[] Generate(
         TreeGenerationSettings settings,
@@ -55,6 +57,10 @@ internal static class TreeBranchGeometryGenerator
         double minimumHalfExtent =
             settings.GridSpacing.Units /
             4.0;
+        double canopyReachWidth =
+            ResolveCanopyReachWidth(
+                realizedCanopyWidth,
+                settings.OverallHeight);
 
         foreach (PlannedTreeBranch branch in skeleton.Branches) {
             int realizedSegmentCount =
@@ -74,7 +80,7 @@ internal static class TreeBranchGeometryGenerator
                     ? ResolvePrimaryBranch(
                         branch,
                         trunk.AttachmentProfile,
-                        realizedCanopyWidth,
+                        canopyReachWidth,
                         minimumHalfExtent,
                         settings.GridSpacing.Units,
                         geometrySegmentCount,
@@ -110,7 +116,7 @@ internal static class TreeBranchGeometryGenerator
     private static ResolvedBranchGeometry ResolvePrimaryBranch(
         PlannedTreeBranch branch,
         TrunkAttachmentProfile trunkProfile,
-        double realizedCanopyWidth,
+        double canopyReachWidth,
         double minimumHalfExtent,
         double grid,
         int realizedSegmentCount,
@@ -138,7 +144,7 @@ internal static class TreeBranchGeometryGenerator
             ResolvePrimaryBranchLength(
                 branch,
                 attachment.HalfWidth * 2.0,
-                realizedCanopyWidth,
+                canopyReachWidth,
                 startHalfExtent,
                 grid);
         Vector3d horizontalOutwardDirection =
@@ -250,10 +256,42 @@ internal static class TreeBranchGeometryGenerator
             outwardDirection);
     }
 
+    private static double ResolveCanopyReachWidth(
+        double realizedCanopyWidth,
+        double overallHeight)
+    {
+        ValidatePositiveDimension(
+            realizedCanopyWidth,
+            nameof(realizedCanopyWidth));
+        ValidatePositiveDimension(
+            overallHeight,
+            nameof(overallHeight));
+
+        double referenceCanopyWidth =
+            overallHeight *
+            ReferenceCanopyWidthToTreeHeightRatio;
+
+        if (realizedCanopyWidth <= referenceCanopyWidth) {
+            return realizedCanopyWidth;
+        }
+
+        double oversizedRatio =
+            realizedCanopyWidth /
+            referenceCanopyWidth;
+        double responsiveScale =
+            Math.Min(
+                MaximumOversizedCanopyReachScale,
+                Math.Sqrt(
+                    oversizedRatio));
+
+        return referenceCanopyWidth *
+            responsiveScale;
+    }
+
     private static double ResolvePrimaryBranchLength(
         PlannedTreeBranch branch,
         double localTrunkDiameter,
-        double realizedCanopyWidth,
+        double canopyReachWidth,
         double startHalfExtent,
         double grid)
     {
@@ -268,7 +306,7 @@ internal static class TreeBranchGeometryGenerator
                 Math.Sqrt(
                     diameterRatio));
         double canopyDrivenLength =
-            realizedCanopyWidth *
+            canopyReachWidth *
             0.5 *
             branch.LengthScale *
             allometricScale *
@@ -280,7 +318,7 @@ internal static class TreeBranchGeometryGenerator
         double maximumLength =
             Math.Max(
                 grid * 2.0,
-                realizedCanopyWidth *
+                canopyReachWidth *
                 MaximumPrimaryCanopyLengthFraction);
 
         return ResolveBoundedBranchLength(

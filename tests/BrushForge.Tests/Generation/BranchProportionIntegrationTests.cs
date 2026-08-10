@@ -140,6 +140,105 @@ public sealed class BranchProportionIntegrationTests
         }
     }
 
+    [Fact]
+    public void GenerateDampensBranchGrowthForOversizedCanopies()
+    {
+        TreeGenerationResult reference =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkWidth: 32.0,
+                    canopyWidth: 192.0));
+        TreeGenerationResult wide =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkWidth: 32.0,
+                    canopyWidth: 384.0));
+
+        bool[] primarySelections = [true, false];
+
+        foreach (bool primary in primarySelections) {
+            Dictionary<string, double> referenceLengths =
+                GetBranchChordLengths(
+                    reference,
+                    primary);
+            Dictionary<string, double> wideLengths =
+                GetBranchChordLengths(
+                    wide,
+                    primary);
+
+            Assert.Equal(
+                referenceLengths.Count,
+                wideLengths.Count);
+            Assert.True(
+                referenceLengths.Keys
+                    .OrderBy(
+                        path =>
+                            path,
+                        StringComparer.Ordinal)
+                    .SequenceEqual(
+                        wideLengths.Keys.OrderBy(
+                            path =>
+                                path,
+                            StringComparer.Ordinal)));
+
+            double[] ratios =
+                referenceLengths.Keys
+                    .Select(
+                        path =>
+                            wideLengths[path] /
+                            referenceLengths[path])
+                    .ToArray();
+
+            Assert.All(
+                ratios,
+                ratio =>
+                    Assert.InRange(
+                        ratio,
+                        1.0 + CoordinateTolerance,
+                        1.60));
+        }
+    }
+
+    [Fact]
+    public void GenerateCapsBranchReachForExtremelyWideCanopies()
+    {
+        TreeGenerationResult wide =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkWidth: 32.0,
+                    canopyWidth: 512.0));
+        TreeGenerationResult extreme =
+            TreeGenerator.Generate(
+                CreateSettings(
+                    trunkWidth: 32.0,
+                    canopyWidth: 1024.0));
+
+        bool[] primarySelections = [true, false];
+
+        foreach (bool primary in primarySelections) {
+            Dictionary<string, double> wideLengths =
+                GetBranchChordLengths(
+                    wide,
+                    primary);
+            Dictionary<string, double> extremeLengths =
+                GetBranchChordLengths(
+                    extreme,
+                    primary);
+
+            Assert.Equal(
+                wideLengths.Count,
+                extremeLengths.Count);
+
+            foreach (string path in wideLengths.Keys) {
+                Assert.True(
+                    Math.Abs(
+                        wideLengths[path] -
+                        extremeLengths[path]) <=
+                    CoordinateTolerance);
+            }
+        }
+    }
+
     private static Dictionary<string, double> GetBranchChordLengths(
         TreeGenerationResult result,
         bool primary)
@@ -228,13 +327,14 @@ public sealed class BranchProportionIntegrationTests
 
     private static TreeGenerationSettings CreateSettings(
         double trunkWidth,
+        double canopyWidth = 192.0,
         ulong generationSeed = 83_417UL)
     {
         return new TreeGenerationSettings(
             Vector3d.Zero,
             overallHeight: 256.0,
             trunkWidth: trunkWidth,
-            canopyWidth: 192.0,
+            canopyWidth: canopyWidth,
             canopyHeight: 128.0,
             canopyLayerCount: 3,
             generationSeed:

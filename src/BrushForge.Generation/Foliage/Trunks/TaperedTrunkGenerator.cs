@@ -160,6 +160,23 @@ internal static class TaperedTrunkGenerator
                 twist,
                 generationSeed,
                 grid);
+        double[] attachmentFractions =
+            new double[segmentCount + 1];
+        Vector3d[] attachmentCenters =
+            new Vector3d[segmentCount + 1];
+        double[] attachmentHalfWidths =
+            new double[segmentCount + 1];
+
+        attachmentFractions[0] = 0.0;
+        attachmentCenters[0] = new Vector3d(
+            flaredBaseCenter.X,
+            flaredBaseCenter.Y,
+            origin.Z);
+        attachmentHalfWidths[0] =
+            flaredBaseWidthUnits *
+            grid /
+            2.0;
+
         int currentBottomUnits = 0;
         List<GeneratedTreeBrush> parts = [];
 
@@ -232,6 +249,20 @@ internal static class TaperedTrunkGenerator
                     canopyLayerIndex: -1,
                     brush,
                     bounds));
+
+            attachmentFractions[segmentIndex + 1] =
+                currentTopUnits /
+                (double)trunkTopUnits;
+            attachmentCenters[segmentIndex + 1] =
+                new Vector3d(
+                    ringCenters[segmentIndex + 1].X,
+                    ringCenters[segmentIndex + 1].Y,
+                    topZ);
+            attachmentHalfWidths[segmentIndex + 1] =
+                segmentTopWidthUnits *
+                grid /
+                2.0;
+
             currentBottomUnits =
                 currentTopUnits;
         }
@@ -244,7 +275,12 @@ internal static class TaperedTrunkGenerator
 
         return new GeneratedTrunk(
             parts,
-            topCenter);
+            topCenter,
+            new TrunkAttachmentProfile(
+                attachmentFractions,
+                attachmentCenters,
+                attachmentHalfWidths,
+                trunkCrossSection));
     }
 
     private static int CalculateBaseFlareAddedWidthUnits(

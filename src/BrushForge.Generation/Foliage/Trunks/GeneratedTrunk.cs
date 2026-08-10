@@ -12,7 +12,8 @@ internal sealed class GeneratedTrunk
 
     public GeneratedTrunk(
         IEnumerable<GeneratedTreeBrush> parts,
-        Vector3d topCenter)
+        Vector3d topCenter,
+        TrunkAttachmentProfile attachmentProfile)
     {
         ArgumentNullException.ThrowIfNull(parts);
 
@@ -43,14 +44,19 @@ internal sealed class GeneratedTrunk
                 "The generated trunk top center must be finite.");
         }
 
+        ArgumentNullException.ThrowIfNull(attachmentProfile);
+
         _parts =
             Array.AsReadOnly(
                 partArray);
         TopCenter = topCenter;
+        AttachmentProfile = attachmentProfile;
     }
 
     public IReadOnlyList<GeneratedTreeBrush> Parts =>
         _parts;
 
     public Vector3d TopCenter { get; }
+
+    public TrunkAttachmentProfile AttachmentProfile { get; }
 }

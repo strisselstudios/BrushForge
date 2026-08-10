@@ -108,9 +108,7 @@ public static class TreeGenerator
             TreeBranchGeometryGenerator.Generate(
                 settings,
                 branchSkeleton,
-                origin,
-                trunk.TopCenter,
-                trunkWidthUnits * grid,
+                trunk,
                 canopyWidthUnits * grid);
 
         parts.AddRange(

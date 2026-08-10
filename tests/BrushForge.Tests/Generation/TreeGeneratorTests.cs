@@ -41,9 +41,9 @@ public sealed class TreeGeneratorTests
                 .ToArray();
 
         Assert.Equal(3, trunkParts.Length);
-        Assert.Equal(35, branchParts.Length);
+        Assert.Equal(100, branchParts.Length);
         Assert.Equal(4, canopyParts.Length);
-        Assert.Equal(42, result.BrushCount);
+        Assert.Equal(107, result.BrushCount);
         Assert.All(
             trunkParts.Concat(branchParts),
             part =>
@@ -862,7 +862,7 @@ public sealed class TreeGeneratorTests
                 .ToArray();
 
         Assert.Equal(
-            15,
+            40,
             branches.Length);
         Assert.Equal(
             5,
@@ -878,16 +878,14 @@ public sealed class TreeGeneratorTests
                                 branch.BranchSegmentIndex)
                         .ToArray();
 
-                Assert.Equal(3, segments.Length);
+                Assert.Equal(8, segments.Length);
                 Assert.Equal(
-                    0,
-                    segments[0].BranchSegmentIndex);
-                Assert.Equal(
-                    1,
-                    segments[1].BranchSegmentIndex);
-                Assert.Equal(
-                    2,
-                    segments[2].BranchSegmentIndex);
+                    Enumerable.Range(
+                        0,
+                        8),
+                    segments.Select(
+                        segment =>
+                            segment.BranchSegmentIndex));
                 Assert.All(
                     segments,
                     branch =>
@@ -896,10 +894,10 @@ public sealed class TreeGeneratorTests
                             -1,
                             branch.CanopyLayerIndex);
                         Assert.Equal(
-                            3,
+                            8,
                             branch.BranchSegmentCount);
                         Assert.Equal(
-                            6,
+                            10,
                             branch.Brush.FaceCount);
                         Assert.True(
                             ConvexBrushValidator.Validate(
@@ -1061,7 +1059,7 @@ public sealed class TreeGeneratorTests
                 .ToArray();
 
         Assert.Equal(
-            20,
+            60,
             secondaries.Length);
         Assert.Equal(
             10,
@@ -1077,13 +1075,14 @@ public sealed class TreeGeneratorTests
                                 branch.BranchSegmentIndex)
                         .ToArray();
 
-                Assert.Equal(2, segments.Length);
+                Assert.Equal(6, segments.Length);
                 Assert.Equal(
-                    0,
-                    segments[0].BranchSegmentIndex);
-                Assert.Equal(
-                    1,
-                    segments[1].BranchSegmentIndex);
+                    Enumerable.Range(
+                        0,
+                        6),
+                    segments.Select(
+                        segment =>
+                            segment.BranchSegmentIndex));
                 Assert.All(
                     segments,
                     branch =>
@@ -1093,10 +1092,10 @@ public sealed class TreeGeneratorTests
                                 "/S",
                                 StringComparison.Ordinal));
                         Assert.Equal(
-                            2,
+                            6,
                             branch.BranchSegmentCount);
                         Assert.Equal(
-                            6,
+                            10,
                             branch.Brush.FaceCount);
                         Assert.True(
                             ConvexBrushValidator.Validate(
@@ -1179,10 +1178,10 @@ public sealed class TreeGeneratorTests
 
     [Theory]
     [InlineData(0.0, 1)]
-    [InlineData(0.35, 2)]
-    [InlineData(0.55, 2)]
-    [InlineData(0.75, 3)]
-    [InlineData(1.0, 3)]
+    [InlineData(0.35, 3)]
+    [InlineData(0.55, 5)]
+    [InlineData(0.75, 7)]
+    [InlineData(1.0, 8)]
     public void GenerateScalesPrimaryBranchSegmentationWithDetail(
         double detail,
         int expectedSegmentsPerPath)

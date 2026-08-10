@@ -1,5 +1,6 @@
 using BrushForge.Core.Grid;
 using BrushForge.Core.Randomness;
+using BrushForge.Geometry.Brushes;
 using BrushForge.Geometry.Validation;
 using BrushForge.Geometry.Vectors;
 using BrushForge.Generation.Foliage;
@@ -9,6 +10,8 @@ namespace BrushForge.Tests.Generation;
 
 public sealed class TrunkCrossSectionControlTests
 {
+    private const double CoordinateTolerance = 1e-8;
+
     [Fact]
     public void SettingsUseOctagonalTrunkCrossSectionByDefault()
     {
@@ -124,7 +127,7 @@ public sealed class TrunkCrossSectionControlTests
     }
 
     [Fact]
-    public void ChangingCrossSectionPreservesTreeBoundsAndPartBounds()
+    public void ChangingCrossSectionPreservesNonBranchGeometryAndBranchThicknessWhileBranchesFollowSurface()
     {
         TreeGenerationResult square =
             TreeGenerator.Generate(
@@ -138,17 +141,59 @@ public sealed class TrunkCrossSectionControlTests
                         TrunkCrossSectionProfile.Octagonal));
 
         Assert.Equal(
-            square.Bounds,
-            octagonal.Bounds);
+            square.Bounds.Minimum.Z,
+            octagonal.Bounds.Minimum.Z);
+        Assert.Equal(
+            square.Bounds.Maximum.Z,
+            octagonal.Bounds.Maximum.Z);
         Assert.Equal(
             square.Parts.Count,
             octagonal.Parts.Count);
 
+        bool branchSurfacePositionChanged = false;
+
         for (int index = 0; index < square.Parts.Count; index++) {
+            GeneratedTreeBrush squarePart =
+                square.Parts[index];
+            GeneratedTreeBrush octagonalPart =
+                octagonal.Parts[index];
+
             Assert.Equal(
-                square.Parts[index].Bounds,
-                octagonal.Parts[index].Bounds);
+                squarePart.Role,
+                octagonalPart.Role);
+            Assert.Equal(
+                squarePart.CanopyLayerIndex,
+                octagonalPart.CanopyLayerIndex);
+            Assert.Equal(
+                squarePart.BranchPath,
+                octagonalPart.BranchPath);
+            Assert.Equal(
+                squarePart.BranchSegmentIndex,
+                octagonalPart.BranchSegmentIndex);
+            Assert.Equal(
+                squarePart.BranchSegmentCount,
+                octagonalPart.BranchSegmentCount);
+            if (squarePart.Role != TreeBrushRole.Branch) {
+                Assert.Equal(
+                    squarePart.Bounds,
+                    octagonalPart.Bounds);
+                continue;
+            }
+
+            AssertApproximatelyEqual(
+                GetStartHalfExtent(squarePart),
+                GetStartHalfExtent(octagonalPart));
+            AssertApproximatelyEqual(
+                GetEndHalfExtent(squarePart),
+                GetEndHalfExtent(octagonalPart));
+
+            branchSurfacePositionChanged |=
+                !AreVectorsApproximatelyEqual(
+                    squarePart.Bounds.Center,
+                    octagonalPart.Bounds.Center);
         }
+
+        Assert.True(branchSurfacePositionChanged);
     }
 
     [Fact]
@@ -193,6 +238,46 @@ public sealed class TrunkCrossSectionControlTests
                 trunkParts[index - 1].Bounds.Maximum.Z,
                 trunkParts[index].Bounds.Minimum.Z);
         }
+    }
+
+    private static void AssertApproximatelyEqual(
+        double expected,
+        double actual)
+    {
+        Assert.InRange(
+            Math.Abs(actual - expected),
+            0.0,
+            CoordinateTolerance);
+    }
+
+    private static double GetStartHalfExtent(
+        GeneratedTreeBrush branch)
+    {
+        PlanePoints3d cap =
+            branch.Brush.Faces[0].PlanePoints;
+
+        return cap.First.DistanceTo(cap.Second) /
+            2.0;
+    }
+
+    private static double GetEndHalfExtent(
+        GeneratedTreeBrush branch)
+    {
+        PlanePoints3d cap =
+            branch.Brush.Faces[1].PlanePoints;
+
+        return cap.First.DistanceTo(cap.Second) /
+            2.0;
+    }
+
+    private static bool AreVectorsApproximatelyEqual(
+        Vector3d first,
+        Vector3d second)
+    {
+        return
+            Math.Abs(first.X - second.X) <= CoordinateTolerance &&
+            Math.Abs(first.Y - second.Y) <= CoordinateTolerance &&
+            Math.Abs(first.Z - second.Z) <= CoordinateTolerance;
     }
 
     private static GeneratedTreeBrush[] GenerateTrunkParts(

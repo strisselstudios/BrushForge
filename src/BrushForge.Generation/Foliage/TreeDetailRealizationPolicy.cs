@@ -9,6 +9,8 @@ namespace BrushForge.Generation.Foliage;
 internal static class TreeDetailRealizationPolicy
 {
     private const double OctagonalTrunkDetailThreshold = 0.50;
+    private const double HexagonalBranchDetailThreshold = 0.50;
+    private const double OctagonalBranchDetailThreshold = 0.85;
 
     public static TrunkCrossSectionProfile ResolveTrunkCrossSection(
         TreeGenerationSettings settings)
@@ -72,8 +74,30 @@ internal static class TreeDetailRealizationPolicy
         ArgumentNullException.ThrowIfNull(branch);
 
         return branch.Depth == 0
-            ? 3
-            : 2;
+            ? 8
+            : 6;
+    }
+
+    public static int ResolveBranchSideCount(
+        TreeGenerationSettings settings,
+        PlannedTreeBranch branch)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(branch);
+
+        if (settings.Detail < branch.RequiredDetail) {
+            return 4;
+        }
+
+        if (settings.Detail >= OctagonalBranchDetailThreshold) {
+            return 8;
+        }
+
+        if (settings.Detail >= HexagonalBranchDetailThreshold) {
+            return 6;
+        }
+
+        return 4;
     }
 
     public static int ResolveBranchSegmentCount(

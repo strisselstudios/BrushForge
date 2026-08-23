@@ -1,3 +1,4 @@
+using BrushForge.Core.Randomness;
 using BrushForge.Geometry.Bounds;
 using BrushForge.Geometry.Brushes;
 using BrushForge.Geometry.Vectors;
@@ -10,12 +11,28 @@ namespace BrushForge.Generation.Foliage;
 /// </summary>
 internal static class TaperedTrunkGenerator
 {
-    public static IReadOnlyList<GeneratedTreeBrush> Generate(
+    private const ulong DeformationSeedSalt =
+        0xD1B54A32D192ED03UL;
+
+    private const ulong BaseFlareSeedSalt =
+        0x94D049BB133111EBUL;
+
+    private const ulong IrregularitySeedSalt =
+        0x9E3779B97F4A7C15UL;
+
+    public static GeneratedTrunk Generate(
         Vector3d origin,
         int trunkWidthUnits,
         int trunkTopUnits,
         int requestedSegmentCount,
         double taper,
+        double lean,
+        double bend,
+        double baseFlare,
+        TrunkCrossSectionProfile trunkCrossSection,
+        double irregularity,
+        double twist,
+        GenerationSeed generationSeed,
         double grid,
         string textureName)
     {
@@ -44,16 +61,50 @@ internal static class TaperedTrunkGenerator
                 $"The requested trunk segment count must be between {TreeGenerationSettings.MinimumTrunkSegmentCount} and {TreeGenerationSettings.MaximumTrunkSegmentCount}.");
         }
 
-        if (
-            !double.IsFinite(taper) ||
-            taper < TreeGenerationSettings.MinimumTrunkTaper ||
-            taper > TreeGenerationSettings.MaximumTrunkTaper
-        ) {
+        ValidateFraction(
+            taper,
+            TreeGenerationSettings.MinimumTrunkTaper,
+            TreeGenerationSettings.MaximumTrunkTaper,
+            nameof(taper),
+            "trunk taper");
+        ValidateFraction(
+            lean,
+            TreeGenerationSettings.MinimumTrunkLean,
+            TreeGenerationSettings.MaximumTrunkLean,
+            nameof(lean),
+            "trunk lean");
+        ValidateFraction(
+            bend,
+            TreeGenerationSettings.MinimumTrunkBend,
+            TreeGenerationSettings.MaximumTrunkBend,
+            nameof(bend),
+            "trunk bend");
+        ValidateFraction(
+            baseFlare,
+            TreeGenerationSettings.MinimumTrunkBaseFlare,
+            TreeGenerationSettings.MaximumTrunkBaseFlare,
+            nameof(baseFlare),
+            "trunk base flare");
+        ValidateFraction(
+            irregularity,
+            TreeGenerationSettings.MinimumTrunkIrregularity,
+            TreeGenerationSettings.MaximumTrunkIrregularity,
+            nameof(irregularity),
+            "trunk irregularity");
+        ValidateFraction(
+            twist,
+            TreeGenerationSettings.MinimumTrunkTwist,
+            TreeGenerationSettings.MaximumTrunkTwist,
+            nameof(twist),
+            "trunk twist");
+
+        if (!Enum.IsDefined(trunkCrossSection)) {
             throw new ArgumentOutOfRangeException(
-                nameof(taper),
-                taper,
-                $"The trunk taper must be between {TreeGenerationSettings.MinimumTrunkTaper:P0} and {TreeGenerationSettings.MaximumTrunkTaper:P0}.");
+                nameof(trunkCrossSection),
+                trunkCrossSection,
+                "The trunk cross-section profile is not supported.");
         }
+
         if (!double.IsFinite(grid) || grid <= 0.0) {
             throw new ArgumentOutOfRangeException(
                 nameof(grid),
@@ -80,12 +131,52 @@ internal static class TaperedTrunkGenerator
                     MidpointRounding.AwayFromZero),
                 1,
                 trunkWidthUnits);
-        bool useOctagonalRings =
-            topWidthUnits >= 3;
+        int baseFlareAddedWidthUnits =
+            CalculateBaseFlareAddedWidthUnits(
+                trunkWidthUnits,
+                baseFlare);
+        int flaredBaseWidthUnits =
+            trunkWidthUnits +
+            baseFlareAddedWidthUnits;
+        Vector3d flaredBaseCenter =
+            CreateBaseFlareCenter(
+                origin,
+                baseFlareAddedWidthUnits,
+                generationSeed,
+                grid);
         int baseSegmentHeightUnits =
             trunkTopUnits / segmentCount;
         int remainingHeightUnits =
             trunkTopUnits % segmentCount;
+        Vector3d[] ringCenters =
+            CreateRingCenters(
+                origin,
+                trunkWidthUnits,
+                trunkTopUnits,
+                segmentCount,
+                lean,
+                bend,
+                irregularity,
+                twist,
+                generationSeed,
+                grid);
+        double[] attachmentFractions =
+            new double[segmentCount + 1];
+        Vector3d[] attachmentCenters =
+            new Vector3d[segmentCount + 1];
+        double[] attachmentHalfWidths =
+            new double[segmentCount + 1];
+
+        attachmentFractions[0] = 0.0;
+        attachmentCenters[0] = new Vector3d(
+            flaredBaseCenter.X,
+            flaredBaseCenter.Y,
+            origin.Z);
+        attachmentHalfWidths[0] =
+            flaredBaseWidthUnits *
+            grid /
+            2.0;
+
         int currentBottomUnits = 0;
         List<GeneratedTreeBrush> parts = [];
 
@@ -105,11 +196,13 @@ internal static class TaperedTrunkGenerator
                 currentBottomUnits +
                 segmentHeightUnits;
             int bottomWidthUnits =
-                InterpolateWidthUnits(
-                    trunkWidthUnits,
-                    topWidthUnits,
-                    segmentIndex,
-                    segmentCount);
+                segmentIndex == 0
+                    ? flaredBaseWidthUnits
+                    : InterpolateWidthUnits(
+                        trunkWidthUnits,
+                        topWidthUnits,
+                        segmentIndex,
+                        segmentCount);
             int segmentTopWidthUnits =
                 InterpolateWidthUnits(
                     trunkWidthUnits,
@@ -122,20 +215,24 @@ internal static class TaperedTrunkGenerator
             double topZ =
                 origin.Z +
                 (currentTopUnits * grid);
+            Vector3d bottomRingCenter =
+                segmentIndex == 0
+                    ? flaredBaseCenter
+                    : ringCenters[segmentIndex];
             Vector3d[] bottomRing =
                 CreateRing(
-                    origin,
+                    bottomRingCenter,
                     bottomWidthUnits,
                     bottomZ,
                     grid,
-                    useOctagonalRings);
+                    trunkCrossSection);
             Vector3d[] topRing =
                 CreateRing(
-                    origin,
+                    ringCenters[segmentIndex + 1],
                     segmentTopWidthUnits,
                     topZ,
                     grid,
-                    useOctagonalRings);
+                    trunkCrossSection);
             ConvexBrush brush =
                 VerticalConvexFrustumBrushFactory.Create(
                     bottomRing,
@@ -152,11 +249,310 @@ internal static class TaperedTrunkGenerator
                     canopyLayerIndex: -1,
                     brush,
                     bounds));
+
+            attachmentFractions[segmentIndex + 1] =
+                currentTopUnits /
+                (double)trunkTopUnits;
+            attachmentCenters[segmentIndex + 1] =
+                new Vector3d(
+                    ringCenters[segmentIndex + 1].X,
+                    ringCenters[segmentIndex + 1].Y,
+                    topZ);
+            attachmentHalfWidths[segmentIndex + 1] =
+                segmentTopWidthUnits *
+                grid /
+                2.0;
+
             currentBottomUnits =
                 currentTopUnits;
         }
 
-        return parts;
+        Vector3d topCenter = new(
+            ringCenters[^1].X,
+            ringCenters[^1].Y,
+            origin.Z +
+            (trunkTopUnits * grid));
+
+        return new GeneratedTrunk(
+            parts,
+            topCenter,
+            new TrunkAttachmentProfile(
+                attachmentFractions,
+                attachmentCenters,
+                attachmentHalfWidths,
+                trunkCrossSection));
+    }
+
+    private static int CalculateBaseFlareAddedWidthUnits(
+        int trunkWidthUnits,
+        double baseFlare)
+    {
+        return Math.Clamp(
+            (int)Math.Round(
+                trunkWidthUnits *
+                baseFlare,
+                MidpointRounding.AwayFromZero),
+            0,
+            trunkWidthUnits);
+    }
+
+    private static Vector3d CreateBaseFlareCenter(
+        Vector3d origin,
+        int addedWidthUnits,
+        GenerationSeed generationSeed,
+        double grid)
+    {
+        if (addedWidthUnits == 0) {
+            return origin;
+        }
+
+        DeterministicRandom random =
+            new(
+                generationSeed.Value ^
+                BaseFlareSeedSalt);
+
+        (int directionX, int directionY) =
+            SelectCardinalDirection(
+                random.NextInt32(4));
+
+        double centerOffset =
+            (addedWidthUnits * grid) /
+            2.0;
+
+        return new Vector3d(
+            origin.X +
+            (directionX * centerOffset),
+            origin.Y +
+            (directionY * centerOffset),
+            origin.Z);
+    }
+
+    private static Vector3d[] CreateRingCenters(
+        Vector3d origin,
+        int trunkWidthUnits,
+        int trunkTopUnits,
+        int segmentCount,
+        double lean,
+        double bend,
+        double irregularity,
+        double twist,
+        GenerationSeed generationSeed,
+        double grid)
+    {
+        DeterministicRandom random =
+            new(
+                generationSeed.Value ^
+                DeformationSeedSalt);
+
+        (int leanX, int leanY) =
+            SelectCardinalDirection(
+                random.NextInt32(4));
+
+        int bendSign =
+            random.NextBoolean()
+                ? 1
+                : -1;
+        int bendX =
+            -leanY *
+            bendSign;
+        int bendY =
+            leanX *
+            bendSign;
+
+        DeterministicRandom irregularityRandom =
+            new(
+                generationSeed.Value ^
+                IrregularitySeedSalt);
+        double startingIrregularityAngle =
+            irregularityRandom.NextInt32(8) *
+            (Math.PI / 4.0);
+        int twistDirection =
+            irregularityRandom.NextBoolean()
+                ? 1
+                : -1;
+
+        int leanOffsetUnits =
+            CalculateOffsetUnits(
+                trunkTopUnits,
+                lean);
+        int bendOffsetUnits =
+            CalculateOffsetUnits(
+                trunkTopUnits,
+                bend);
+        Vector3d[] centers =
+            new Vector3d[segmentCount + 1];
+
+        for (
+            int levelIndex = 0;
+            levelIndex <= segmentCount;
+            levelIndex++
+        ) {
+            double progress =
+                levelIndex /
+                (double)segmentCount;
+            int appliedLeanUnits =
+                (int)Math.Round(
+                    leanOffsetUnits *
+                    progress,
+                    MidpointRounding.AwayFromZero);
+            int appliedBendUnits =
+                (int)Math.Round(
+                    bendOffsetUnits *
+                    Math.Sin(
+                        Math.PI *
+                        progress),
+                    MidpointRounding.AwayFromZero);
+            int xOffsetUnits =
+                (leanX * appliedLeanUnits) +
+                (bendX * appliedBendUnits);
+            int yOffsetUnits =
+                (leanY * appliedLeanUnits) +
+                (bendY * appliedBendUnits);
+            Vector3d irregularityOffset =
+                CreateIrregularityOffset(
+                    trunkWidthUnits,
+                    levelIndex,
+                    segmentCount,
+                    progress,
+                    irregularity,
+                    twist,
+                    startingIrregularityAngle,
+                    twistDirection,
+                    irregularityRandom,
+                    grid);
+
+            centers[levelIndex] = new Vector3d(
+                origin.X +
+                (xOffsetUnits * grid) +
+                irregularityOffset.X,
+                origin.Y +
+                (yOffsetUnits * grid) +
+                irregularityOffset.Y,
+                origin.Z);
+        }
+
+        return centers;
+    }
+
+    private static Vector3d CreateIrregularityOffset(
+        int trunkWidthUnits,
+        int levelIndex,
+        int segmentCount,
+        double progress,
+        double irregularity,
+        double twist,
+        double startingAngle,
+        int twistDirection,
+        DeterministicRandom random,
+        double grid)
+    {
+        if (
+            irregularity <= 0.0 ||
+            levelIndex == 0 ||
+            levelIndex == segmentCount
+        ) {
+            return Vector3d.Zero;
+        }
+
+        double envelope =
+            Math.Sin(
+                Math.PI *
+                progress);
+        double amplitudeScale =
+            random.NextDouble(
+                0.65,
+                1.0);
+        double phaseJitter =
+            random.NextDouble(
+                -Math.PI / 12.0,
+                Math.PI / 12.0);
+        double angle =
+            startingAngle +
+            (
+                twistDirection *
+                Math.Tau *
+                twist *
+                progress
+            ) +
+            phaseJitter;
+        double radius =
+            trunkWidthUnits *
+            grid *
+            irregularity *
+            envelope *
+            amplitudeScale;
+
+        return new Vector3d(
+            SnapToQuarterGrid(
+                Math.Cos(angle) *
+                radius,
+                grid),
+            SnapToQuarterGrid(
+                Math.Sin(angle) *
+                radius,
+                grid),
+            0.0);
+    }
+
+    private static double SnapToQuarterGrid(
+        double value,
+        double grid)
+    {
+        double increment =
+            grid /
+            4.0;
+
+        return Math.Round(
+            value /
+            increment,
+            MidpointRounding.AwayFromZero) *
+            increment;
+    }
+
+    private static (int X, int Y) SelectCardinalDirection(
+        int directionIndex)
+    {
+        return directionIndex switch
+        {
+            0 => (1, 0),
+            1 => (0, 1),
+            2 => (-1, 0),
+            3 => (0, -1),
+            _ =>
+                throw new ArgumentOutOfRangeException(
+                    nameof(directionIndex),
+                    directionIndex,
+                    "The trunk deformation direction is not recognized.")
+        };
+    }
+
+    private static int CalculateOffsetUnits(
+        int trunkTopUnits,
+        double amount)
+    {
+        return (int)Math.Round(
+            trunkTopUnits *
+            amount,
+            MidpointRounding.AwayFromZero);
+    }
+
+    private static void ValidateFraction(
+        double value,
+        double minimum,
+        double maximum,
+        string parameterName,
+        string displayName)
+    {
+        if (
+            !double.IsFinite(value) ||
+            value < minimum ||
+            value > maximum
+        ) {
+            throw new ArgumentOutOfRangeException(
+                parameterName,
+                value,
+                $"The {displayName} must be between {minimum:P0} and {maximum:P0}.");
+        }
     }
 
     private static int InterpolateWidthUnits(
@@ -180,33 +576,36 @@ internal static class TaperedTrunkGenerator
     }
 
     private static Vector3d[] CreateRing(
-        Vector3d origin,
+        Vector3d center,
         int widthUnits,
         double z,
         double grid,
-        bool useOctagonalRing)
+        TrunkCrossSectionProfile trunkCrossSection)
     {
         // Widths can change from an even to an odd number of grid units.
-        // Using integer offsets would shift odd-width rings by half a grid
-        // unit, causing one side of the trunk to remain visually vertical.
-        // Half-grid coordinates keep every ring centered on the same axis.
+        // Square rings use half-grid coordinates. Octagonal rings use
+        // quarter-grid corner cuts so their side count is independent of
+        // the selected grid spacing and remains valid at one grid unit.
+        double width =
+            widthUnits *
+            grid;
         double halfWidth =
-            (widthUnits * grid) /
+            width /
             2.0;
         double minimumX =
-            origin.X -
+            center.X -
             halfWidth;
         double minimumY =
-            origin.Y -
+            center.Y -
             halfWidth;
         double maximumX =
-            origin.X +
+            center.X +
             halfWidth;
         double maximumY =
-            origin.Y +
+            center.Y +
             halfWidth;
 
-        if (!useOctagonalRing) {
+        if (trunkCrossSection == TrunkCrossSectionProfile.Square) {
             return
             [
                 new Vector3d(
@@ -228,7 +627,17 @@ internal static class TaperedTrunkGenerator
             ];
         }
 
-        double inset = grid;
+        if (trunkCrossSection != TrunkCrossSectionProfile.Octagonal) {
+            throw new ArgumentOutOfRangeException(
+                nameof(trunkCrossSection),
+                trunkCrossSection,
+                "The trunk cross-section profile is not supported.");
+        }
+
+        double inset =
+            width /
+            4.0;
+
         return
         [
             new Vector3d(

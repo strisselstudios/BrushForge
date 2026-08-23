@@ -235,6 +235,10 @@
                     </Grid>
                     <Slider x:Name="TrunkWidthSlider" />
 
+                    <TextBlock Text="Trunk cross-section" />
+                    <ComboBox x:Name="TrunkCrossSectionComboBox"
+                              ToolTip="Selects four or eight vertical trunk faces independently of grid spacing." />
+
                     <TextBlock Text="Trunk segments" />
                     <ComboBox x:Name="TrunkSegmentCountComboBox"
                               ToolTip="Number of contiguous convex brushes used for the trunk. Available counts adapt to the current trunk height." />
@@ -252,6 +256,90 @@
                     </Grid>
                     <Slider x:Name="TrunkTaperSlider"
                             ToolTip="Percentage reduction from the trunk base width to its top width." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk lean" />
+                        <TextBlock x:Name="TrunkLeanValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkLeanSlider"
+                            ToolTip="Horizontal displacement of the trunk top as a percentage of trunk height. The seed selects the direction." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk bend" />
+                        <TextBlock x:Name="TrunkBendValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkBendSlider"
+                            ToolTip="Sideways bow through the middle rings as a percentage of trunk height. The top still follows Trunk Lean." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk base flare" />
+                        <TextBlock x:Name="TrunkBaseFlareValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkBaseFlareSlider"
+                            ToolTip="Widens and shifts the lowest trunk ring in a seed-selected cardinal direction. Higher trunk rings keep their existing path." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk irregularity" />
+                        <TextBlock x:Name="TrunkIrregularityValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkIrregularitySlider"
+                            ToolTip="Adds seed-driven quarter-grid offsets to intermediate trunk rings while preserving the base and top positions." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Trunk twist" />
+                        <TextBlock x:Name="TrunkTwistValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="0%" />
+                    </Grid>
+                    <Slider x:Name="TrunkTwistSlider"
+                            ToolTip="Rotates the irregularity path around the trunk from zero to one full turn. It does not change the selected cross-section face count." />
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Detail" />
+                        <TextBlock x:Name="DetailValueTextBlock"
+                                   Grid.Column="1"
+                                   Foreground="#AEB6C2"
+                                   Text="100%" />
+                    </Grid>
+                    <Slider x:Name="DetailSlider"
+                            ToolTip="Controls the amount of generated tree geometry while preserving the selected tree seed and identity." />
 
                     <Grid>
                         <Grid.ColumnDefinitions>

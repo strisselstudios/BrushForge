@@ -3,14 +3,15 @@ using BrushForge.Core.Randomness;
 using BrushForge.Geometry.Bounds;
 using BrushForge.Geometry.Brushes;
 using BrushForge.Geometry.Vectors;
+using BrushForge.Generation.Foliage.Branches;
 using BrushForge.Generation.Geometry;
 using BrushForge.MapFormat.Model;
 
 namespace BrushForge.Generation.Foliage;
 
 /// <summary>
-/// Generates a low-brush-count segmented trunk and layered box canopy
-/// suitable for preview and Valve 220 export.
+/// Generates a low-brush-count segmented trunk, deterministic primary
+/// branches, and layered box canopy suitable for preview and Valve 220 export.
 /// </summary>
 public static class TreeGenerator
 {
@@ -67,16 +68,51 @@ public static class TreeGenerator
             overallHeightUnits,
             canopyBottomUnits + 1);
 
-        List<GeneratedTreeBrush> parts =
+        TrunkCrossSectionProfile trunkCrossSection =
+            TreeDetailRealizationPolicy.ResolveTrunkCrossSection(
+                settings);
+        double trunkIrregularity =
+            TreeDetailRealizationPolicy.ResolveTrunkIrregularity(
+                settings);
+        double trunkTwist =
+            TreeDetailRealizationPolicy.ResolveTrunkTwist(
+                settings);
+        int trunkSegmentCount =
+            TreeDetailRealizationPolicy.ResolveTrunkSegmentCount(
+                settings);
+
+        GeneratedTrunk trunk =
             TaperedTrunkGenerator.Generate(
                 origin,
                 trunkWidthUnits,
                 trunkTopUnits,
-                settings.TrunkSegmentCount,
+                trunkSegmentCount,
                 settings.TrunkTaper,
+                settings.TrunkLean,
+                settings.TrunkBend,
+                settings.TrunkBaseFlare,
+                trunkCrossSection,
+                trunkIrregularity,
+                trunkTwist,
+                settings.GenerationSeed,
                 grid,
-                settings.TrunkTextureName)
-                .ToList();
+                settings.TrunkTextureName);
+
+        List<GeneratedTreeBrush> parts =
+            trunk.Parts.ToList();
+
+        TreeBranchSkeleton branchSkeleton =
+            TreeBranchSkeletonPlanner.Create(
+                settings);
+        GeneratedTreeBrush[] branchParts =
+            TreeBranchGeometryGenerator.Generate(
+                settings,
+                branchSkeleton,
+                trunk,
+                canopyWidthUnits * grid);
+
+        parts.AddRange(
+            branchParts);
 
         DeterministicRandom random =
             new(settings.GenerationSeed);
@@ -84,6 +120,107 @@ public static class TreeGenerator
         int minimumCanopyWidthUnits = Math.Min(
             canopyWidthUnits,
             trunkWidthUnits + 2);
+
+        Bounds3d[] plannedCanopyBounds =
+            CreatePlannedCanopyBounds(
+                settings,
+                trunk.TopCenter,
+                origin,
+                canopyBottomUnits,
+                canopyHeightUnits,
+                canopyWidthUnits,
+                minimumCanopyWidthUnits,
+                random,
+                grid);
+
+        int realizedCanopyLayerCount =
+            TreeDetailRealizationPolicy.ResolveCanopyLayerCount(
+                settings);
+
+        Bounds3d[] realizedCanopyBounds =
+            RealizeCanopyBounds(
+                plannedCanopyBounds,
+                realizedCanopyLayerCount);
+
+        for (
+            int layerIndex = 0;
+            layerIndex < realizedCanopyBounds.Length;
+            layerIndex++
+        ) {
+            Bounds3d canopyBounds =
+                realizedCanopyBounds[layerIndex];
+
+            ConvexBrush canopyBrush =
+                AxisAlignedBoxBrushFactory.Create(
+                    canopyBounds,
+                    settings.CanopyTextureName);
+
+            parts.Add(
+                new GeneratedTreeBrush(
+                    TreeBrushRole.Canopy,
+                    layerIndex,
+                    canopyBrush,
+                    canopyBounds));
+        }
+
+        ConvexBrush[] brushes =
+            parts
+                .Select(
+                    part =>
+                        part.Brush)
+                .ToArray();
+
+        MapEntity worldspawn =
+            MapEntity.CreateWorldspawn(
+                brushes,
+            [
+                new MapProperty(
+                    "_brushforge_generator",
+                    "tree"),
+                new MapProperty(
+                    "_brushforge_seed",
+                    settings.GenerationSeed.ToString())
+            ]);
+
+        MapDocument document = new(
+        [
+            worldspawn
+        ]);
+
+        return new TreeGenerationResult(
+            parts,
+            document);
+    }
+
+    private static int ToGridUnits(
+        double value,
+        GridSpacing gridSpacing,
+        int minimumUnits)
+    {
+        double rounded = Math.Round(
+            value / gridSpacing.Units,
+            MidpointRounding.AwayFromZero);
+
+        int units = checked((int)rounded);
+
+        return Math.Max(
+            minimumUnits,
+            units);
+    }
+
+    private static Bounds3d[] CreatePlannedCanopyBounds(
+        TreeGenerationSettings settings,
+        Vector3d trunkTopCenter,
+        Vector3d origin,
+        int canopyBottomUnits,
+        int canopyHeightUnits,
+        int canopyWidthUnits,
+        int minimumCanopyWidthUnits,
+        DeterministicRandom random,
+        double grid)
+    {
+        Bounds3d[] plannedBounds =
+            new Bounds3d[settings.CanopyLayerCount];
 
         int baseLayerHeightUnits =
             canopyHeightUnits /
@@ -153,8 +290,10 @@ public static class TreeGenerator
                     maximumYOffsetUnits);
 
             Vector3d layerCenter = new(
-                origin.X + (xOffsetUnits * grid),
-                origin.Y + (yOffsetUnits * grid),
+                trunkTopCenter.X +
+                (xOffsetUnits * grid),
+                trunkTopCenter.Y +
+                (yOffsetUnits * grid),
                 origin.Z);
 
             double layerMinimumZ =
@@ -168,7 +307,7 @@ public static class TreeGenerator
                 origin.Z +
                 (currentBottomUnits * grid);
 
-            Bounds3d canopyBounds =
+            plannedBounds[layerIndex] =
                 CreateCenteredBounds(
                     layerCenter,
                     layerWidthUnits,
@@ -176,63 +315,78 @@ public static class TreeGenerator
                     layerMinimumZ,
                     layerMaximumZ,
                     grid);
-
-            ConvexBrush canopyBrush =
-                AxisAlignedBoxBrushFactory.Create(
-                    canopyBounds,
-                    settings.CanopyTextureName);
-
-            parts.Add(
-                new GeneratedTreeBrush(
-                    TreeBrushRole.Canopy,
-                    layerIndex,
-                    canopyBrush,
-                    canopyBounds));
         }
 
-        ConvexBrush[] brushes =
-            parts
-                .Select(
-                    part =>
-                        part.Brush)
-                .ToArray();
-
-        MapEntity worldspawn =
-            MapEntity.CreateWorldspawn(
-                brushes,
-            [
-                new MapProperty(
-                    "_brushforge_generator",
-                    "tree"),
-                new MapProperty(
-                    "_brushforge_seed",
-                    settings.GenerationSeed.ToString())
-            ]);
-
-        MapDocument document = new(
-        [
-            worldspawn
-        ]);
-
-        return new TreeGenerationResult(
-            parts,
-            document);
+        return plannedBounds;
     }
 
-    private static int ToGridUnits(
-        double value,
-        GridSpacing gridSpacing,
-        int minimumUnits)
+    private static Bounds3d[] RealizeCanopyBounds(
+        Bounds3d[] plannedBounds,
+        int realizedLayerCount)
     {
-        double rounded = Math.Round(
-            value / gridSpacing.Units,
-            MidpointRounding.AwayFromZero);
+        if (realizedLayerCount == plannedBounds.Length) {
+            return plannedBounds.ToArray();
+        }
 
-        int units = checked((int)rounded);
+        List<(int StartIndex, int EndIndexExclusive)> groups =
+        [
+            (0, plannedBounds.Length)
+        ];
 
-        return Math.Max(
-            minimumUnits,
-            units);
+        while (groups.Count < realizedLayerCount) {
+            int splitGroupIndex = 0;
+            int largestGroupSize = 0;
+
+            for (int index = 0; index < groups.Count; index++) {
+                int groupSize =
+                    groups[index].EndIndexExclusive -
+                    groups[index].StartIndex;
+
+                if (groupSize > largestGroupSize) {
+                    largestGroupSize = groupSize;
+                    splitGroupIndex = index;
+                }
+            }
+
+            (int startIndex, int endIndexExclusive) =
+                groups[splitGroupIndex];
+
+            int splitIndex =
+                startIndex +
+                ((endIndexExclusive - startIndex) / 2);
+
+            groups[splitGroupIndex] =
+                (startIndex, splitIndex);
+            groups.Insert(
+                splitGroupIndex + 1,
+                (splitIndex, endIndexExclusive));
+        }
+
+        Bounds3d[] realizedBounds =
+            new Bounds3d[groups.Count];
+
+        for (int groupIndex = 0; groupIndex < groups.Count; groupIndex++) {
+            (int startIndex, int endIndexExclusive) =
+                groups[groupIndex];
+
+            Bounds3d mergedBounds =
+                plannedBounds[startIndex];
+
+            for (
+                int layerIndex = startIndex + 1;
+                layerIndex < endIndexExclusive;
+                layerIndex++
+            ) {
+                mergedBounds =
+                    mergedBounds.Union(
+                        plannedBounds[layerIndex]);
+            }
+
+            realizedBounds[groupIndex] =
+                mergedBounds;
+        }
+
+        return realizedBounds;
     }
 
     private static int CalculateLayerWidthUnits(

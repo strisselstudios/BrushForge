@@ -21,10 +21,30 @@ public partial class MainWindow : Window
     private const string DefaultGenerationSeed = "1";
     private const double DefaultOverallHeight = 256.0;
     private const double DefaultTrunkWidth = 32.0;
+    private const TrunkCrossSectionProfile DefaultTrunkCrossSection =
+        TreeGenerationSettings.DefaultTrunkCrossSection;
     private const int DefaultTrunkSegmentCount =
         TreeGenerationSettings.DefaultTrunkSegmentCount;
     private const double DefaultTrunkTaperPercent =
         TreeGenerationSettings.DefaultTrunkTaper *
+        100.0;
+    private const double DefaultTrunkLeanPercent =
+        TreeGenerationSettings.DefaultTrunkLean *
+        100.0;
+    private const double DefaultTrunkBendPercent =
+        TreeGenerationSettings.DefaultTrunkBend *
+        100.0;
+    private const double DefaultTrunkBaseFlarePercent =
+        TreeGenerationSettings.DefaultTrunkBaseFlare *
+        100.0;
+    private const double DefaultTrunkIrregularityPercent =
+        TreeGenerationSettings.DefaultTrunkIrregularity *
+        100.0;
+    private const double DefaultTrunkTwistPercent =
+        TreeGenerationSettings.DefaultTrunkTwist *
+        100.0;
+    private const double DefaultDetailPercent =
+        TreeGenerationSettings.DefaultDetail *
         100.0;
     private const double DefaultCanopyWidth = 160.0;
     private const double DefaultCanopyHeight = 128.0;
@@ -95,6 +115,72 @@ public partial class MainWindow : Window
             value: DefaultTrunkTaperPercent);
 
         ConfigureSlider(
+            TrunkLeanSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkLean *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkLean *
+                100.0,
+            step: 5.0,
+            value: DefaultTrunkLeanPercent);
+
+        ConfigureSlider(
+            TrunkBendSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkBend *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkBend *
+                100.0,
+            step: 5.0,
+            value: DefaultTrunkBendPercent);
+
+        ConfigureSlider(
+            TrunkBaseFlareSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkBaseFlare *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkBaseFlare *
+                100.0,
+            step: 25.0,
+            value: DefaultTrunkBaseFlarePercent);
+
+        ConfigureSlider(
+            TrunkIrregularitySlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkIrregularity *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkIrregularity *
+                100.0,
+            step: 5.0,
+            value: DefaultTrunkIrregularityPercent);
+
+        ConfigureSlider(
+            TrunkTwistSlider,
+            minimum:
+                TreeGenerationSettings.MinimumTrunkTwist *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumTrunkTwist *
+                100.0,
+            step: 25.0,
+            value: DefaultTrunkTwistPercent);
+
+        ConfigureSlider(
+            DetailSlider,
+            minimum:
+                TreeGenerationSettings.MinimumDetail *
+                100.0,
+            maximum:
+                TreeGenerationSettings.MaximumDetail *
+                100.0,
+            step: 1.0,
+            value: DefaultDetailPercent);
+
+        ConfigureSlider(
             CanopyWidthSlider,
             minimum: 128.0,
             maximum: 512.0,
@@ -122,6 +208,13 @@ public partial class MainWindow : Window
         CanopyLayerCountComboBox.SelectedItem =
             DefaultCanopyLayerCount;
 
+        TrunkCrossSectionComboBox.Items.Add(
+            TrunkCrossSectionProfile.Square);
+        TrunkCrossSectionComboBox.Items.Add(
+            TrunkCrossSectionProfile.Octagonal);
+        TrunkCrossSectionComboBox.SelectedItem =
+            DefaultTrunkCrossSection;
+
         foreach (
             double gridSpacing in
             new[]
@@ -146,11 +239,25 @@ public partial class MainWindow : Window
             OnDimensionSliderValueChanged;
         TrunkTaperSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
+        TrunkLeanSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkBendSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkBaseFlareSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkIrregularitySlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        TrunkTwistSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
+        DetailSlider.ValueChanged +=
+            OnDimensionSliderValueChanged;
         CanopyWidthSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
         CanopyHeightSlider.ValueChanged +=
             OnDimensionSliderValueChanged;
 
+        TrunkCrossSectionComboBox.SelectionChanged +=
+            OnGenerationSelectionChanged;
         TrunkSegmentCountComboBox.SelectionChanged +=
             OnGenerationSelectionChanged;
         CanopyLayerCountComboBox.SelectionChanged +=
@@ -377,6 +484,30 @@ public partial class MainWindow : Window
         TrunkTaperValueTextBlock.Text =
             FormatPercent(
                 TrunkTaperSlider.Value);
+
+        TrunkLeanValueTextBlock.Text =
+            FormatPercent(
+                TrunkLeanSlider.Value);
+
+        TrunkBendValueTextBlock.Text =
+            FormatPercent(
+                TrunkBendSlider.Value);
+
+        TrunkBaseFlareValueTextBlock.Text =
+            FormatPercent(
+                TrunkBaseFlareSlider.Value);
+
+        TrunkIrregularityValueTextBlock.Text =
+            FormatPercent(
+                TrunkIrregularitySlider.Value);
+
+        TrunkTwistValueTextBlock.Text =
+            FormatPercent(
+                TrunkTwistSlider.Value);
+
+        DetailValueTextBlock.Text =
+            FormatPercent(
+                DetailSlider.Value);
 
         CanopyWidthValueTextBlock.Text =
             FormatUnits(
@@ -620,6 +751,31 @@ public partial class MainWindow : Window
                 SelectRandomSliderTick(
                     TrunkTaperSlider,
                     random);
+            TrunkLeanSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkLeanSlider,
+                    random);
+            TrunkBendSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkBendSlider,
+                    random);
+            TrunkBaseFlareSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkBaseFlareSlider,
+                    random);
+            TrunkIrregularitySlider.Value =
+                SelectRandomSliderTick(
+                    TrunkIrregularitySlider,
+                    random);
+            TrunkTwistSlider.Value =
+                SelectRandomSliderTick(
+                    TrunkTwistSlider,
+                    random);
+            TrunkCrossSectionComboBox.SelectedItem =
+                SelectRandomComboBoxItem<TrunkCrossSectionProfile>(
+                    TrunkCrossSectionComboBox,
+                    random,
+                    "Trunk cross-section");
 
             UpdateDimensionValueLabels();
         }
@@ -655,8 +811,22 @@ public partial class MainWindow : Window
                 DefaultOverallHeight;
             TrunkWidthSlider.Value =
                 DefaultTrunkWidth;
+            TrunkCrossSectionComboBox.SelectedItem =
+                DefaultTrunkCrossSection;
             TrunkTaperSlider.Value =
                 DefaultTrunkTaperPercent;
+            TrunkLeanSlider.Value =
+                DefaultTrunkLeanPercent;
+            TrunkBendSlider.Value =
+                DefaultTrunkBendPercent;
+            TrunkBaseFlareSlider.Value =
+                DefaultTrunkBaseFlarePercent;
+            TrunkIrregularitySlider.Value =
+                DefaultTrunkIrregularityPercent;
+            TrunkTwistSlider.Value =
+                DefaultTrunkTwistPercent;
+            DetailSlider.Value =
+                DefaultDetailPercent;
             CanopyWidthSlider.Value =
                 DefaultCanopyWidth;
             CanopyHeightSlider.Value =
@@ -799,6 +969,11 @@ public partial class MainWindow : Window
 
     private TreeGenerationInput ReadInput()
     {
+        TrunkCrossSectionProfile trunkCrossSection =
+            ReadSelectedValue<TrunkCrossSectionProfile>(
+                TrunkCrossSectionComboBox,
+                "Trunk cross-section");
+
         int trunkSegmentCount =
             ReadSelectedValue<int>(
                 TrunkSegmentCountComboBox,
@@ -833,7 +1008,20 @@ public partial class MainWindow : Window
             trunkSegmentCount.ToString(
                 CultureInfo.InvariantCulture),
             FormatControlValue(
-                TrunkTaperSlider.Value));
+                TrunkTaperSlider.Value),
+            FormatControlValue(
+                TrunkLeanSlider.Value),
+            FormatControlValue(
+                TrunkBendSlider.Value),
+            FormatControlValue(
+                TrunkBaseFlareSlider.Value),
+            trunkCrossSection.ToString(),
+            FormatControlValue(
+                TrunkIrregularitySlider.Value),
+            FormatControlValue(
+                TrunkTwistSlider.Value),
+            FormatControlValue(
+                DetailSlider.Value));
     }
 
     private void ClearResult(

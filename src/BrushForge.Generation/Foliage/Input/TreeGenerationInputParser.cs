@@ -60,6 +60,76 @@ public static class TreeGenerationInputParser
                     100.0,
                 displayName: "Trunk taper");
 
+        double trunkLeanPercent =
+            ParseBoundedDouble(
+                input.TrunkLeanPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkLean *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkLean *
+                    100.0,
+                displayName: "Trunk lean");
+
+        double trunkBendPercent =
+            ParseBoundedDouble(
+                input.TrunkBendPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkBend *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkBend *
+                    100.0,
+                displayName: "Trunk bend");
+
+        double trunkBaseFlarePercent =
+            ParseBoundedDouble(
+                input.TrunkBaseFlarePercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkBaseFlare *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkBaseFlare *
+                    100.0,
+                displayName: "Trunk base flare");
+
+        TrunkCrossSectionProfile trunkCrossSection =
+            ParseTrunkCrossSection(
+                input.TrunkCrossSection);
+
+        double trunkIrregularityPercent =
+            ParseBoundedDouble(
+                input.TrunkIrregularityPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkIrregularity *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkIrregularity *
+                    100.0,
+                displayName: "Trunk irregularity");
+
+        double trunkTwistPercent =
+            ParseBoundedDouble(
+                input.TrunkTwistPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumTrunkTwist *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumTrunkTwist *
+                    100.0,
+                displayName: "Trunk twist");
+
+        double detailPercent =
+            ParseBoundedDouble(
+                input.DetailPercent,
+                minimum:
+                    TreeGenerationSettings.MinimumDetail *
+                    100.0,
+                maximum:
+                    TreeGenerationSettings.MaximumDetail *
+                    100.0,
+                displayName: "Detail");
+
         double gridUnits =
             ParsePositiveDouble(
                 input.GridSpacing,
@@ -77,7 +147,31 @@ public static class TreeGenerationInputParser
             input.TrunkTextureName,
             input.CanopyTextureName,
             trunkSegmentCount,
-            trunkTaperPercent / 100.0);
+            trunkTaperPercent / 100.0,
+            trunkLeanPercent / 100.0,
+            trunkBendPercent / 100.0,
+            trunkBaseFlarePercent / 100.0,
+            trunkCrossSection,
+            trunkIrregularityPercent / 100.0,
+            trunkTwistPercent / 100.0,
+            detailPercent / 100.0);
+    }
+
+    private static TrunkCrossSectionProfile ParseTrunkCrossSection(
+        string text)
+    {
+        if (
+            !Enum.TryParse(
+                text,
+                ignoreCase: true,
+                out TrunkCrossSectionProfile profile) ||
+            !Enum.IsDefined(profile)
+        ) {
+            throw new FormatException(
+                "Trunk cross-section must be Square or Octagonal.");
+        }
+
+        return profile;
     }
 
     private static GenerationSeed ParseGenerationSeed(

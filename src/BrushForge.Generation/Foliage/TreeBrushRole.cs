@@ -6,5 +6,6 @@ namespace BrushForge.Generation.Foliage;
 public enum TreeBrushRole
 {
     Trunk = 0,
-    Canopy = 1
+    Canopy = 1,
+    Branch = 2
 }
